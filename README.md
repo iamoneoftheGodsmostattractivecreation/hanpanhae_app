@@ -1,6 +1,6 @@
 # hanpanhae
 
-A new Flutter project.
+A new Flutter project. This is my first challenge application development. Actually, it's been a while, ChatGPT recommended me uploading my project to github. So... yeah~ 
 
 ## Getting Started
 
