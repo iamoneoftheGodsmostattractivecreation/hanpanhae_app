@@ -27,8 +27,7 @@ class MyApp extends StatelessWidget {
 
 // 홈 화면
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
+  const HomeScreen({super.key}); //HomeScreen 객체 생성 가능하게 해주는 코드
   void goToGroupSetup(BuildContext context) {
     Navigator.push(
       context,
@@ -64,7 +63,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {}, //빈 함수 실행 아직 입장하기 버튼 눌렀을 때 어떻게 할지 안정했음 ㅇㅇ
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(220, 60),
                 backgroundColor: Colors.white24,
@@ -94,7 +93,7 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
 
   void addFriend() {
     setState(() {
-      players.add('친구 ${players.length}'); //친구 1 추가
+      players.add('친구 ${players.length}'); //친구 1 추가 , $ : 문자열 안에 변수 넣기
     });
   }
 
@@ -108,22 +107,22 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
     Navigator.push(
       context, //현재 화면 정보
       MaterialPageRoute( //게임 선택 화면으로 이동하는 함수 
-        builder: (_) => GameSelectScreen(players: players), //현재 players 리스트를 다음 하면으로 넘김
+        builder: (_) => GameSelectScreen(players: players), //이동할 화면을 생성하고, 현재 players 리스트를 다음 화면으로 넘김
       ),
     );
   }
 
   @override //부모함수재정의
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold( //Scaffold에는 배경, appbar, body 같은 걸 담는다. 
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: bgColor,
         foregroundColor: Colors.white,
-        title: const Text('그룹 설정'),
+        title: const Text('그룹 설정'), //그룹 설정이라는 텍스트값을 계속 띄울 수 있게 하려고(고정이니까) const를 쓰는 거임
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24), //안쪽여백, 상하좌우 24만큼 띄워라.
         child: Column(
           children: [
             const Text(
@@ -176,12 +175,12 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
                     ),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.white,
-                          foregroundColor: bgColor,
+                        CircleAvatar( //“동그란 프로필 UI”
+                          backgroundColor: Colors.white, //배경색
+                          foregroundColor: bgColor, //안에 들어가는 글자색
                           child: Text('${index + 1}'),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 16), //가로로 16픽셀 빈 공간 넣기 //[동그라미]      이름      : 이렇게 사이 띄우는 거.
                         Expanded(
                           child: Text(
                             players[index],
@@ -225,11 +224,11 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
 class GameSelectScreen extends StatefulWidget {
   final List<String> players;
 
-  const GameSelectScreen({super.key, required this.players}); //required는 이 값 반드시 넣어야함
+  const GameSelectScreen({super.key, required this.players}); //required : 이 값 반드시 넣어야함
 
   @override
   State<GameSelectScreen> createState() => _GameSelectScreenState(); //GameSelectedScreen의 상태는 _GameSelectScreenState가 담당한다
-} // _ 가 앞에 붙는 이유는 이 파일 내부에서만 사용 가능(private) 이라는 Dart 문법 ! 외부에서 막 쓰지마
+} // _ 가 앞에 붙는 이유는 이 파일 내부에서만 사용 가능(private) 이라는 Dart 문법 ! 외부에서 막 쓰지말라는 뜻
 
 class _GameSelectScreenState extends State<GameSelectScreen> {
   String selectedGame = '연타게임';
@@ -267,9 +266,11 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
             Text(
               gameName == '연타게임' // 게임 이름이 연타게임인가?
                   ? '👆' //맞으면 손가락 이모지 출력
-                    : gameName == '틀린말찾기'
-                      ? '👀'
-                      : '🎵', //그외
+                  : gameName == '틀린말찾기'
+                    ? '👀'
+                    : gameName == '초록칸누르기'
+                      ? '🟩'
+                      : '🎵',
               style: const TextStyle(fontSize: 28),
             ),
             const SizedBox(width: 16),
@@ -296,31 +297,32 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
         foregroundColor: Colors.white,
         title: const Text('게임 선택'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Stack(
+      body: Padding( //위젯이름이 Padding인거임
+        padding: const EdgeInsets.all(24), // Padding 위젯의 속성: 안의 내용물을 상하좌우 24만큼 안쪽으로 밀어라
+        child: Stack( //겹쳐놓는 화면구조
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Column( //세로로 나열하는 문법
+              crossAxisAlignment: CrossAxisAlignment.start, //가로축 기준 시작점(왼쪽)으로 정렬하라
               children: [
                 const Text(
-                  '어떤 게임 할까?',
+                  '어떤 게임 할까?', //이 글자는 고정
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 30), 
                 gameButton('연타게임'),
                 gameButton('리듬게임'),
-                gameButton('틀린말찾기')
+                gameButton('틀린말찾기'),
+                gameButton('초록칸누르기')
               ],
             ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: ElevatedButton(
+            Positioned( //정확환 위치 지정하는 문법
+              right: 0, //오른쪽 끝에 붙여라
+              bottom: 0, // 아래끝에 붙여라           결과적으로 오른쪽 아래끝에 버튼 생김!!
+              child: ElevatedButton(  //배치할 실제 위젯
                 onPressed: goToPunishmentSelect,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(120, 56),
@@ -339,7 +341,7 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
 
 // 벌칙 설정 화면
 class PunishmentSelectScreen extends StatefulWidget {
-  final List<String> players;
+  final List<String> players; //final: 실행중에결정되어 그뒤로 못바꾸는문법
   final String selectedGame;
 
   const PunishmentSelectScreen({
@@ -356,7 +358,7 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
   String selectedPunishment = '랜덤 벌칙';
 
   Widget punishmentButton(String title) {
-    final selected = selectedPunishment == title;
+    final selected = selectedPunishment == title; //“현재 선택된 벌칙이 이 버튼 제목이랑 같은지 검사해서 결과 저장”
 
     return GestureDetector(
       onTap: () {
@@ -368,7 +370,7 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.white.withOpacity(0.14),
+          color: selected ? Colors.white : Colors.white.withOpacity(0.14), //선택된버튼이면 흰색, 아니면 반투명
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -398,7 +400,7 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
 
   void goToTimeSelect() {
     Navigator.push(
-      context,
+      context, //현재 화면 기준으로 새화면 올려라 라는 뜻
       MaterialPageRoute(
         builder: (_) => TimeSelectScreen(
           players: widget.players,
@@ -515,6 +517,13 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
               players: widget.players,
               punishmentType: widget.punishmentType,
             );
+        }
+        if (widget.selectedGame == '초록칸누르기') {
+          return GreenTileGameScreen(
+            gameTime: selectedTime,
+            players: widget.players,
+            punishmentType: widget.punishmentType,
+          );
         }
 
         return TapGameScreen(
@@ -1302,6 +1311,197 @@ class _RhythmGameScreenState extends State<RhythmGameScreen> {
               child: Text(
                 canTap ? 'TAP' : 'LISTEN',
                 style: const TextStyle(fontSize: 32),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+class GreenTileGameScreen extends StatefulWidget {
+  final int gameTime;
+  final List<String> players;
+  final String punishmentType;
+
+  const GreenTileGameScreen({
+    super.key,
+    required this.gameTime,
+    required this.players,
+    required this.punishmentType,
+  });
+
+  @override
+  State<GreenTileGameScreen> createState() => _GreenTileGameScreenState();
+}
+
+class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
+  int score = 0;
+  late int remainingTime;
+
+  Timer? gameTimer;
+  Timer? tileTimer;
+
+  int greenIndex = 0;
+  bool canTap = true;
+
+  final int tileChangeMs = 650;
+
+  @override
+  void initState() {
+    super.initState();
+    remainingTime = widget.gameTime;
+    makeNewGreenTile();
+    startGameTimer();
+    startTileTimer();
+  }
+
+  void startGameTimer() {
+    gameTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (remainingTime <= 1) {
+        gameTimer?.cancel();
+        tileTimer?.cancel();
+        goToResultScreen();
+      } else {
+        setState(() {
+          remainingTime--;
+        });
+      }
+    });
+  }
+
+  void startTileTimer() {
+    tileTimer = Timer.periodic(Duration(milliseconds: tileChangeMs), (_) {
+      setState(() {
+        score--;
+        makeNewGreenTile();
+      });
+    });
+  }
+
+  void makeNewGreenTile() {
+    greenIndex = Random().nextInt(9);
+    canTap = true;
+  }
+
+  void tapTile(int index) {
+    setState(() {
+      if (index == greenIndex && canTap) {
+        score++;
+        makeNewGreenTile();
+      } else {
+        score--;
+      }
+    });
+  }
+
+  String decidePunishment() {
+    final randomPunishments = [
+      '음료수 사기',
+      '편의점 다녀오기',
+      '노래 한 소절 부르기',
+      '애교하기',
+      '다음 판 방장하기',
+    ];
+
+    if (widget.punishmentType == '랜덤 벌칙') {
+      return randomPunishments[Random().nextInt(randomPunishments.length)];
+    }
+
+    if (widget.punishmentType == '팀장이 직접 선택') {
+      return '팀장이 고른 벌칙';
+    }
+
+    return '직접 입력한 벌칙';
+  }
+
+  void goToResultScreen() {
+    final random = Random();
+
+    final results = widget.players.map((name) {
+      if (name == '나') {
+        return PlayerResult(name, score);
+      }
+
+      return PlayerResult(name, random.nextInt(25) - 5);
+    }).toList();
+
+    results.sort((a, b) => b.score.compareTo(a.score));
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResultScreen(
+          results: results,
+          punishmentType: widget.punishmentType,
+          punishment: decidePunishment(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    gameTimer?.cancel();
+    tileTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: bgColor,
+        foregroundColor: Colors.white,
+        title: const Text('초록칸게임'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Text(
+              '남은 시간: $remainingTime초',
+              style: const TextStyle(color: Colors.white, fontSize: 24),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '점수: $score',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              '초록칸을 빠르게 눌러!',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 20,
+              ),
+            ),
+            const SizedBox(height: 30),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                children: List.generate(9, (index) {
+                  final isGreen = index == greenIndex;
+
+                  return GestureDetector(
+                    onTap: () => tapTile(index),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isGreen
+                            ? Colors.green
+                            : Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                  );
+                }),
               ),
             ),
           ],
