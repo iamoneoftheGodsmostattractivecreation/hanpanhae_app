@@ -1,3 +1,6 @@
-import 'package:flutter/material.dart';
+class PlayerResult {
+  final String name;
+  final int score;
 
-const bgColor = Color(0xFF0D1B4C);
+  PlayerResult(this.name, this.score);
+}
