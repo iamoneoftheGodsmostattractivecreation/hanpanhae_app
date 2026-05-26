@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'constants/app_colors.dart';
-import 'models/player_result.dart';
-
 import 'games/tap_game_screen.dart';
 import 'games/wrong_word_game_screen.dart';
 import 'games/rhythm_game_screen.dart';
 import 'games/green_tile_game_screen.dart';
 import 'games/picture_guess_game_screen.dart';
-import 'screens/result_screen.dart';
+
 
 void main() => runApp(const MyApp()); //앱 시작하면 MyApp 화면 실행하라
 

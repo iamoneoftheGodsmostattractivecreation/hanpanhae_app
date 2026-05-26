@@ -1,16 +1,33 @@
-# hanpanhae
+# hanpanhae 🎮
 
-A new Flutter project. This is my first challenge application development. Actually, it's been a while, ChatGPT recommended me uploading my project to github. So... yeah~ 
+A multiplayer mini game party app made with Flutter.
 
-## Getting Started
+This is my first real app development project.
+I started this project to learn Flutter and challenge myself by actually building and designing a game application.
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Tap Game
+- Rhythm Game
+- Wrong Word Game
+- Green Tile Reflex Game
+- Picture Guess Game
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Core Screens
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+![핵심화면](images/core_screens.png)
+
+
+## Tech Stack
+
+- Flutter
+- Dart
+- GitHub
+
+## Current Status
+
+MVP development in progress.
+Planning:
+- Firebase multiplayer
+- Real-time room system
+- Better UI/UX
