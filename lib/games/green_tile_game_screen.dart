@@ -62,7 +62,6 @@ class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
   void startTileTimer() {
     tileTimer = Timer.periodic(Duration(milliseconds: tileChangeMs), (_) {
       setState(() {
-        score--;
         makeNewGreenTile();
       });
     });
@@ -78,9 +77,7 @@ class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
       if (index == greenIndex && canTap) {
         score++;
         makeNewGreenTile();
-      } else {
-        score--;
-      }
+      } 
     });
   }
 
@@ -112,7 +109,7 @@ class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
         return PlayerResult(name, score);
       }
 
-      return PlayerResult(name, random.nextInt(25) - 5);
+      return PlayerResult(name, random.nextInt(25));
     }).toList();
 
     results.sort((a, b) => b.score.compareTo(a.score));

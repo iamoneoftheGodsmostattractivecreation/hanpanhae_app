@@ -130,17 +130,19 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
     questions = getQuestions();
     makeNewQuestion();
     startGameTimer();
-    startQuestionTimer();
   }
 
   List<Map<String, String>> getQuestions() {
     if (widget.category == '동물') {
-      return [
-        {'emoji': '🐶', 'answer': '강아지'},
-        {'emoji': '🐱', 'answer': '고양이'},
-        {'emoji': '🐰', 'answer': '토끼'},
-        {'emoji': '🦊', 'answer': '여우'},
-        {'emoji': '🐼', 'answer': '판다'},
+       return [
+        {'emoji': '🐜', 'answer': '개미핥기'},
+        {'emoji': '🦌', 'answer': '꽃사슴'},
+        {'emoji': '🪳', 'answer': '바퀴벌레'},
+        {'emoji': '🐛', 'answer': '지네'},
+        {'emoji': '🦔', 'answer': '고슴도치'},
+        {'emoji': '🦦', 'answer': '수달'},
+        {'emoji': '🦥', 'answer': '나무늘보'},
+      {'emoji': '🦨', 'answer': '스컹크'},
       ];
     }
 
@@ -164,8 +166,16 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
   }
 
   void makeNewQuestion() {
+    questionTimer?.cancel();
     currentQuestion = questions[Random().nextInt(questions.length)];
     answerController.clear();
+     questionTimer = Timer(const Duration(seconds: 5), () {
+     if (!mounted) return;
+
+     setState(() {
+      makeNewQuestion();
+      });
+    });
   }
 
   void startGameTimer() {
@@ -182,13 +192,6 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
     });
   }
 
-  void startQuestionTimer() {
-    questionTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      setState(() {
-        makeNewQuestion();
-      });
-    });
-  }
 
   void checkAnswer() {
     final userAnswer = answerController.text.trim();
