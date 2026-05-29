@@ -117,6 +117,7 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
   late int remainingTime;
   Timer? gameTimer;
   Timer? questionTimer;
+  int questionRemainingTime = 5;
 
   final TextEditingController answerController = TextEditingController();
 
@@ -153,6 +154,12 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
         {'emoji': '⌚', 'answer': '시계'},
         {'emoji': '🎧', 'answer': '헤드폰'},
         {'emoji': '📷', 'answer': '카메라'},
+        {'emoji': '🧯', 'answer': '소화기'},
+        {'emoji': '🪤', 'answer': '쥐덫'},
+        {'emoji': '🪚', 'answer': '톱'},
+        {'emoji': '🧲', 'answer': '자석'},
+        {'emoji': '🪝', 'answer': '갈고리'},
+        {'emoji': '🧬', 'answer': 'DNA'},
       ];
     }
 
@@ -167,15 +174,27 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
 
   void makeNewQuestion() {
     questionTimer?.cancel();
+
+    setState(() {
     currentQuestion = questions[Random().nextInt(questions.length)];
     answerController.clear();
-     questionTimer = Timer(const Duration(seconds: 5), () {
-     if (!mounted) return;
-
-     setState(() {
-      makeNewQuestion();
-      });
+    questionRemainingTime = 5;
     });
+
+    questionTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (!mounted) return;
+        if (questionRemainingTime <= 1) {
+        timer.cancel();
+        makeNewQuestion();
+        } else {
+          setState(() {
+          questionRemainingTime--;
+          });
+        }
+      },
+    );
   }
 
   void startGameTimer() {
@@ -197,12 +216,12 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
     final userAnswer = answerController.text.trim();
     final correctAnswer = currentQuestion['answer']!;
 
-    setState(() {
-      if (userAnswer == correctAnswer) {
-        score++;
-      }
-      makeNewQuestion();
-    });
+    
+    if (userAnswer == correctAnswer) {
+      score++;
+    }
+    makeNewQuestion();
+    
   }
 
   String decidePunishment() {
@@ -282,6 +301,12 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
                 fontSize: 34,
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(height: 12), 
+            Text( '문제 제한시간: $questionRemainingTime초',
+              style: const TextStyle( 
+              color: Colors.white70, 
+              fontSize: 20, ), 
             ),
             const SizedBox(height: 50),
             Text(
