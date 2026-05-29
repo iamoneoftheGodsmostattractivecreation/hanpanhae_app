@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "316580956209",
+    "project_id": "hanpanhae",
+    "storage_bucket": "hanpanhae.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:316580956209:android:ee0ac46a1e8ab1f5de2d10",
+        "android_client_info": {
+          "package_name": "com.example.hanpanhae"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDt_pH-Q_r26hi9MdkpRcH1x0VHN70ytys"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
