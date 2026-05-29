@@ -5,6 +5,8 @@ import 'games/wrong_word_game_screen.dart';
 import 'games/rhythm_game_screen.dart';
 import 'games/green_tile_game_screen.dart';
 import 'games/picture_guess_game_screen.dart';
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 void main() => runApp(const MyApp()); //앱 시작하면 MyApp 화면 실행하라
@@ -13,7 +15,7 @@ void main() => runApp(const MyApp()); //앱 시작하면 MyApp 화면 실행하�
 class MyApp extends StatelessWidget {
   const MyApp({super.key}); //MyApp 객체 생성 가능하게해주는코드
 
-  @override //부모 클래스 함수를 재정의한다
+  @override //부모 클래스 함수를 재정의flu한다
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false, //오른쪽 위 DEBUG 배너 제거
@@ -50,7 +52,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 50), //50픽셀 빈 공간 : 즉 한판해 (띄우고) 버튼 만드는 거임
             ElevatedButton( //*입체버튼
-              onPressed: () => goToGroupSetup(context), //버튼 눌렀을 때 실행할 동작! 그룹 설정화면으로 이동
+              onPressed: () => createRoom(context), //버튼 눌렀을 때 실행할 동작! 그룹 설정화면으로 이동
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(220, 60),
                 backgroundColor: Colors.white,
@@ -72,6 +74,32 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String makeRoomCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    return List.generate(
+      6,
+      (_) => chars[random.nextInt(chars.length)],
+    ).join();
+  }
+
+  Future<void> createRoom(BuildContext context) async {
+    final roomCode = makeRoomCode();
+
+    await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(roomCode)
+        .set({'roomCode': roomCode,'players': ['나'],'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+      builder: (_) => const GroupSetupScreen(),
+      ),
+   );
   }
 }
 
