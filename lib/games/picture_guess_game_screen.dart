@@ -10,6 +10,7 @@ class PictureCategoryScreen extends StatelessWidget {
   final int gameTime;
   final List<String> players;
   final String punishmentType;
+  
 
   const PictureCategoryScreen({
     super.key,
@@ -120,6 +121,7 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
   int questionRemainingTime = 5;
 
   final TextEditingController answerController = TextEditingController();
+  final FocusNode answerFocusNode = FocusNode();
 
   late List<Map<String, String>> questions;
   late Map<String, String> currentQuestion;
@@ -178,6 +180,7 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
     setState(() {
     currentQuestion = questions[Random().nextInt(questions.length)];
     answerController.clear();
+    answerFocusNode.requestFocus();
     questionRemainingTime = 5;
     });
 
@@ -273,6 +276,7 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
     gameTimer?.cancel();
     questionTimer?.cancel();
     answerController.dispose();
+    answerFocusNode.dispose();
     super.dispose();
   }
 
@@ -316,6 +320,8 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
             const SizedBox(height: 40),
             TextField(
               controller: answerController,
+              focusNode: answerFocusNode,
+              
               style: const TextStyle(color: Colors.white, fontSize: 22),
               decoration: InputDecoration(
                 hintText: '정답 입력',
