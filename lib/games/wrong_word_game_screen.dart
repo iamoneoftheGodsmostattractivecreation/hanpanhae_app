@@ -32,9 +32,9 @@ class _WrongWordGameScreenState
 
   final List<Map<String, String>> questions = [
     {'normal': '사과', 'wrong': '사괴'},
-    {'normal': '고양이', 'wrong': '고양히'},
+    {'normal': '고양이', 'wrong': '고앙이'},
     {'normal': '학교', 'wrong': '학고'},
-    {'normal': '친구', 'wrong': '친쿠'},
+    {'normal': '친구', 'wrong': '친궁'},
     {'normal': '바나나', 'wrong': '바냐나'},
   ];
 
@@ -78,8 +78,6 @@ class _WrongWordGameScreenState
     setState(() {
       if (index == answerIndex) {
         score++;
-      } else {
-        score--;
       }
 
       makeNewQuestion();

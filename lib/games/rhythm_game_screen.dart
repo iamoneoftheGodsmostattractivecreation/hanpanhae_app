@@ -84,9 +84,7 @@ class _RhythmGameScreenState extends State<RhythmGameScreen> {
     setState(() {
       if (diff <= successRangeMs) {
         score++;
-      } else {
-        score--;
-      }
+      } 
     });
   }
 
