@@ -7,9 +7,19 @@ import 'games/green_tile_game_screen.dart';
 import 'games/picture_guess_game_screen.dart';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 
-void main() => runApp(const MyApp()); //앱 시작하면 MyApp 화면 실행하라
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  runApp(const MyApp());
+}
 
 
 class MyApp extends StatelessWidget {
@@ -52,7 +62,9 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 50), //50픽셀 빈 공간 : 즉 한판해 (띄우고) 버튼 만드는 거임
             ElevatedButton( //*입체버튼
-              onPressed: () => createRoom(context), //버튼 눌렀을 때 실행할 동작! 그룹 설정화면으로 이동
+              onPressed: (){
+                createRoom(context);
+              },//버튼 눌렀을 때 실행할 동작! 그룹 설정화면으로 이동
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(220, 60),
                 backgroundColor: Colors.white,
@@ -86,21 +98,29 @@ class HomeScreen extends StatelessWidget {
   }
 
   Future<void> createRoom(BuildContext context) async {
-    final roomCode = makeRoomCode();
-
-    await FirebaseFirestore.instance
-        .collection('rooms')
-        .doc(roomCode)
-        .set({'roomCode': roomCode,'players': ['나'],'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    Navigator.push(
+    print("1");
+    try {
+      final roomcode = makeRoomCode();
+      print("2");
+      await FirebaseFirestore
+      .instance.collection('rooms')
+      .doc(roomcode)
+      .set({'roomCode': roomcode,
+      'players': ['나'],
+      'createdAt': FieldValue.serverTimestamp(),
+      });
+      print("3");
+      Navigator.push(
       context,
       MaterialPageRoute(
-      builder: (_) => const GroupSetupScreen(),
+        builder: (_) => const GroupSetupScreen(),
       ),
-   );
+    );
+    }catch (e) {
+    print('방 만들기 에러: $e');
   }
+
+  } 
 }
 
 // 그룹 설정 화면 (친구 추가됨, 플레이어목록 변함)
