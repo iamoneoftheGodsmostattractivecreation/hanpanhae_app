@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'widgets/chat_box.dart';
 
 
 void main() async {
@@ -43,52 +44,63 @@ class HomeScreen extends StatelessWidget {
       MaterialPageRoute(builder: (_) => const GroupSetupScreen()),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      body: Center( //실제 화면 내용물들을 중앙에 배치해라
-        child: Column( //세로로 쌓아라: 텍스트,버튼,버튼
-          mainAxisAlignment: MainAxisAlignment.center, //세로 방향 기준 가운데 정렬
-          children: [ //Column 안에 들어갈 요소들 목록
-            const Text(
-              '한판해',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 42,
-                fontWeight: FontWeight.bold,
-              ),
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  '한판해',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 50),
+                ElevatedButton(
+                  onPressed: () {
+                    createRoom(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(220, 60),
+                    backgroundColor: Colors.white,
+                    foregroundColor: bgColor,
+                  ),
+                  child: const Text('방 만들기', style: TextStyle(fontSize: 20)),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                  showJoinRoomDialog(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(220, 60),
+                  backgroundColor: Colors.white24,
+                  foregroundColor: Colors.white,
+                  ),
+                  child: const Text('입장하기', style: TextStyle(fontSize: 20))
+                ),
+
+              ],
             ),
-            const SizedBox(height: 50), //50픽셀 빈 공간 : 즉 한판해 (띄우고) 버튼 만드는 거임
-            ElevatedButton( //*입체버튼
-              onPressed: (){
-                createRoom(context);
-              },//버튼 눌렀을 때 실행할 동작! 그룹 설정화면으로 이동
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(220, 60),
-                backgroundColor: Colors.white,
-                foregroundColor: bgColor,
-              ),
-              child: const Text('방 만들기', style: TextStyle(fontSize: 20)), //버튼 안 내용물들
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                 showJoinRoomDialog(context);
-              }, //빈 함수 실행 아직 입장하기 버튼 눌렀을 때 어떻게 할지 안정했음 ㅇㅇ
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(220, 60),
-                backgroundColor: Colors.white24,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('입장하기', style: TextStyle(fontSize: 20)),
-            ),
-          ],
-        ),
+          ),
+          const Positioned(
+            left: 16,
+            bottom: 16,
+            child: ChatBox(),
+          ),
+        ],
       ),
-    );
+     );
   }
+
+
 
   String makeRoomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -175,7 +187,7 @@ class HomeScreen extends StatelessWidget {
       );
     },
   );
-}
+  }
 }
 
 // 그룹 설정 화면 (친구 추가됨, 플레이어목록 변함)
