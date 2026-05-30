@@ -74,7 +74,9 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {}, //빈 함수 실행 아직 입장하기 버튼 눌렀을 때 어떻게 할지 안정했음 ㅇㅇ
+              onPressed: () {
+                 showJoinRoomDialog(context);
+              }, //빈 함수 실행 아직 입장하기 버튼 눌렀을 때 어떻게 할지 안정했음 ㅇㅇ
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(220, 60),
                 backgroundColor: Colors.white24,
@@ -121,6 +123,59 @@ class HomeScreen extends StatelessWidget {
   }
 
   } 
+  void showJoinRoomDialog(BuildContext context) {
+  final TextEditingController roomCodeController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (_) {
+      return AlertDialog(
+        title: const Text('방 코드 입력'),
+        content: TextField(
+          controller: roomCodeController,
+          decoration: const InputDecoration(
+            hintText: '예: JLP3J2',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final roomcode = roomCodeController.text.trim().toUpperCase();
+              print('입력한 방코드: $roomcode');
+
+              final roomDoc = await FirebaseFirestore.instance
+                  .collection('rooms')
+                  .doc(roomcode)
+                  .get();
+
+              print('방 존재함? ${roomDoc.exists}');
+
+              if (roomDoc.exists) {
+                Navigator.pop(context);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const GroupSetupScreen(),
+                  ),
+                );
+              } else {
+                print('없는 방 코드');
+              }
+            },
+            child: const Text('입장'),
+          ),
+        ],
+      );
+    },
+  );
+}
 }
 
 // 그룹 설정 화면 (친구 추가됨, 플레이어목록 변함)
