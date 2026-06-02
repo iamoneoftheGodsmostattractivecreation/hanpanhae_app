@@ -90,7 +90,7 @@ class HomeScreen extends StatelessWidget {
           const Positioned(
             left: 16,
             bottom: 16,
-            child: ChatBox(),
+            child: ChatBox(roomcode: 'global'),
           ),
         ],
       ),
@@ -334,7 +334,7 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
           const Positioned(
             left: 16,
             bottom: 16,
-            child: ChatBox(),
+            child: ChatBox(roomcode: 'global'),
           ),
         ],
       ),
@@ -469,7 +469,7 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
             const Positioned(
               left: 16,
               bottom: 16,
-              child: ChatBox(),
+              child: ChatBox(roomcode: 'global'),
             ),
           ],
         ),
@@ -599,7 +599,7 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
             const Positioned(
               left: 16,
               bottom: 16,
-              child: ChatBox(),
+              child: ChatBox(roomcode: 'global'),
             ),
           ],
         ),
@@ -740,7 +740,7 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
             const Positioned(
               left: 16,
               bottom: 16,
-              child: ChatBox(),
+              child: ChatBox(roomcode: 'global'),
             ),
           ],
         ));
