@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../constants/app_colors.dart';
-
 class ChatBox extends StatelessWidget {
   const ChatBox({super.key});
 
