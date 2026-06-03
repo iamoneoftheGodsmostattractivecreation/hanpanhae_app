@@ -31,3 +31,9 @@ Planning:
 - Firebase multiplayer
 - Real-time room system
 - Better UI/UX
+Current Features
+- Room Creation
+- Room Join
+- Real-time Chat
+- Firebase Firestore Integration
+- Game Selection Synchronization
