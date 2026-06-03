@@ -36,12 +36,6 @@ class MyApp extends StatelessWidget {
 // 홈 화면
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key}); //HomeScreen 객체 생성 가능하게 해주는 코드
-  void goToGroupSetup(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const GroupSetupScreen()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,12 +109,16 @@ class HomeScreen extends StatelessWidget {
         'roomCode': roomcode,
         'players': ['나'],
         'createdAt': FieldValue.serverTimestamp(),
+        'selectedGame': '',
+        'gameStarted': false,
       });
       print("3");
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const GroupSetupScreen(),
+          builder: (_) => GroupSetupScreen(
+            roomcode: roomcode,
+          ),
         ),
       );
     } catch (e) {
@@ -167,7 +165,9 @@ class HomeScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const GroupSetupScreen(),
+                      builder: (_) => GroupSetupScreen(
+                        roomcode: roomcode,
+                      ),
                     ),
                   );
                 } else {
@@ -185,13 +185,15 @@ class HomeScreen extends StatelessWidget {
 
 // 그룹 설정 화면 (친구 추가됨, 플레이어목록 변함)
 class GroupSetupScreen extends StatefulWidget {
-  //상태변하는화면을 만드는 코드
-  const GroupSetupScreen({super.key}); //GroupSetupScreen 객체 생성 가능하게 함
+  final String roomcode;
 
-  @override //부모함수재정의
+  const GroupSetupScreen({
+    super.key,
+    required this.roomcode,
+  });
+
+  @override
   State<GroupSetupScreen> createState() => _GroupSetupScreenState();
-  //State<뭐시기> :뭐시기용 상태 클래스, 그래서 저건 GroupSetUpScreen 화면 상태임
-  //이 화면의 상태를 만들어라, 실제 상태 관리는 _GroupSetupScreenState가 담당
 }
 
 class _GroupSetupScreenState extends State<GroupSetupScreen> {
@@ -215,7 +217,9 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
       MaterialPageRoute(
         //게임 선택 화면으로 이동하는 함수
         builder: (_) => GameSelectScreen(
-            players: players), //이동할 화면을 생성하고, 현재 players 리스트를 다음 화면으로 넘김
+          players: players,
+          roomcode: widget.roomcode,
+        ), //이동할 화면을 생성하고, 현재 players 리스트를 다음 화면으로 넘김
       ),
     );
   }
@@ -345,9 +349,13 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
 // 게임 선택 화면
 class GameSelectScreen extends StatefulWidget {
   final List<String> players;
+  final String roomcode;
 
-  const GameSelectScreen(
-      {super.key, required this.players}); //required : 이 값 반드시 넣어야함
+  const GameSelectScreen({
+    super.key,
+    required this.players,
+    required this.roomcode,
+  }); //required : 이 값 반드시 넣어야함
 
   @override
   State<GameSelectScreen> createState() =>
@@ -357,7 +365,14 @@ class GameSelectScreen extends StatefulWidget {
 class _GameSelectScreenState extends State<GameSelectScreen> {
   String selectedGame = '연타게임';
 
-  void goToPunishmentSelect() {
+  Future<void> goToPunishmentSelect() async {
+    await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .update({
+      'selectedGame': selectedGame,
+      'gameStarted': true,
+    });
     Navigator.push(
       context,
       MaterialPageRoute(
