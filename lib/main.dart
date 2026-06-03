@@ -165,7 +165,7 @@ class HomeScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => GroupSetupScreen(
+                      builder: (_) => WaitingRoomScreen(
                         roomcode: roomcode,
                       ),
                     ),
@@ -759,5 +759,64 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
             ),
           ],
         ));
+  }
+}
+
+class WaitingRoomScreen extends StatelessWidget {
+  final String roomcode;
+
+  const WaitingRoomScreen({
+    super.key,
+    required this.roomcode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: bgColor,
+        foregroundColor: Colors.white,
+        title: const Text('대기실'),
+      ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(roomcode)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+
+          if (data['gameStarted'] == true) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const Text(
+                    '게임 시작!',
+                  ),
+                ),
+              );
+            });
+          }
+
+          return const Center(
+            child: Text(
+              '방장이 게임을 고르는 중...',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
