@@ -335,10 +335,19 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
               ],
             ),
           ),
-          const Positioned(
+          Positioned(
             left: 16,
             bottom: 16,
-            child: ChatBox(roomcode: 'global'),
+            child: ChatBox(roomcode: widget.roomcode),
+            //const는 앱 실행 전에 이미 값이 확정되는 것에만 붙일 수 있어.
+            //근데 widget.roomcode는:
+            //방 만들기 누름
+            //→ 랜덤 roomcode 생성
+            //→ 다음 화면으로 전달
+
+            //처럼 앱 실행 중에 정해지는 값이잖아.
+            //const Positioned = 미리 만들어야 함
+            //widget.roomcode = 실행해봐야 앎
           ),
         ],
       ),
@@ -371,7 +380,6 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
         .doc(widget.roomcode)
         .update({
       'selectedGame': selectedGame,
-      'gameStarted': true,
     });
     Navigator.push(
       context,
@@ -379,6 +387,7 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
         builder: (_) => PunishmentSelectScreen(
           players: widget.players,
           selectedGame: selectedGame,
+          roomcode: widget.roomcode,
         ),
       ),
     );
@@ -481,10 +490,10 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
                 child: const Text('입장'),
               ),
             ),
-            const Positioned(
+            Positioned(
               left: 16,
               bottom: 16,
-              child: ChatBox(roomcode: 'global'),
+              child: ChatBox(roomcode: widget.roomcode),
             ),
           ],
         ),
@@ -497,11 +506,12 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
 class PunishmentSelectScreen extends StatefulWidget {
   final List<String> players; //final: 실행중에결정되어 그뒤로 못바꾸는문법
   final String selectedGame;
-
+  final String roomcode;
   const PunishmentSelectScreen({
     super.key,
     required this.players,
     required this.selectedGame,
+    required this.roomcode,
   });
 
   @override
@@ -563,6 +573,7 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
           players: widget.players,
           punishmentType: selectedPunishment,
           selectedGame: widget.selectedGame,
+          roomcode: widget.roomcode,
         ),
       ),
     );
@@ -628,12 +639,14 @@ class TimeSelectScreen extends StatefulWidget {
   final List<String> players;
   final String punishmentType;
   final String selectedGame;
+  final String roomcode;
 
   const TimeSelectScreen({
     super.key,
     required this.players,
     required this.punishmentType,
     required this.selectedGame,
+    required this.roomcode,
   });
 
   @override
@@ -661,7 +674,13 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
     );
   }
 
-  void startGame() {
+  Future<void> startGame() async {
+    await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .update({
+      'gameStarted': true,
+    });
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -770,6 +789,46 @@ class WaitingRoomScreen extends StatelessWidget {
     required this.roomcode,
   });
 
+  Widget getGameScreen(String selectedGame) {
+    if (selectedGame == '틀린말찾기') {
+      return WrongWordGameScreen(
+        gameTime: 30,
+        players: const ['나'],
+        punishmentType: '랜덤 벌칙',
+      );
+    }
+
+    if (selectedGame == '리듬게임') {
+      return RhythmGameScreen(
+        gameTime: 30,
+        players: const ['나'],
+        punishmentType: '랜덤 벌칙',
+      );
+    }
+
+    if (selectedGame == '초록칸누르기') {
+      return GreenTileGameScreen(
+        gameTime: 30,
+        players: const ['나'],
+        punishmentType: '랜덤 벌칙',
+      );
+    }
+
+    if (selectedGame == '그림맞추기') {
+      return PictureCategoryScreen(
+        gameTime: 30,
+        players: const ['나'],
+        punishmentType: '랜덤 벌칙',
+      );
+    }
+
+    return TapGameScreen(
+      gameTime: 30,
+      players: const ['나'],
+      punishmentType: '랜덤 벌칙',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -795,12 +854,11 @@ class WaitingRoomScreen extends StatelessWidget {
 
           if (data['gameStarted'] == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
+              final selectedGame = data['selectedGame'] as String;
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const Text(
-                    '게임 시작!',
-                  ),
+                  builder: (_) => getGameScreen(selectedGame),
                 ),
               );
             });

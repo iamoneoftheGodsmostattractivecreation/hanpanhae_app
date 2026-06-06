@@ -27,27 +27,27 @@ class _RhythmGameScreenState extends State<RhythmGameScreen> {
   late int remainingTime;
 
   Timer? gameTimer;
-  Timer? beatTimer;
+  Timer? noteTimer;
 
-  bool isBeatTime = false;
-  int lastBeatTime = 0;
+  double noteY = -80;
+  bool noteActive = false;
 
-  final int beatIntervalMs = 900;
-  final int successRangeMs = 250;
+  final double hitLineY = 420;
+  final double hitRange = 55;
 
   @override
   void initState() {
     super.initState();
     remainingTime = widget.gameTime;
     startGameTimer();
-    startBeatTimer();
+    spawnNote();
   }
 
   void startGameTimer() {
     gameTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (remainingTime <= 1) {
         gameTimer?.cancel();
-        beatTimer?.cancel();
+        noteTimer?.cancel();
         goToResultScreen();
       } else {
         setState(() {
@@ -57,34 +57,44 @@ class _RhythmGameScreenState extends State<RhythmGameScreen> {
     });
   }
 
-  void startBeatTimer() {
-    beatTimer = Timer.periodic(
-      Duration(milliseconds: beatIntervalMs),
-      (_) {
-        setState(() {
-          isBeatTime = true;
-          lastBeatTime = DateTime.now().millisecondsSinceEpoch;
-        });
+  void spawnNote() {
+    noteY = -80;
+    noteActive = true;
 
+    noteTimer?.cancel();
+    noteTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      setState(() {
+        noteY += 5;
+      });
+
+      if (noteY > 620) {
+        timer.cancel();
         Future.delayed(const Duration(milliseconds: 250), () {
           if (mounted) {
-            setState(() {
-              isBeatTime = false;
-            });
+            spawnNote();
           }
         });
-      },
-    );
+      }
+    });
   }
 
   void tapBeat() {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final diff = (now - lastBeatTime).abs();
+    if (!noteActive) return;
+
+    final diff = (noteY - hitLineY).abs();
 
     setState(() {
-      if (diff <= successRangeMs) {
+      if (diff <= hitRange) {
         score++;
-      } 
+        noteActive = false;
+        noteTimer?.cancel();
+
+        Future.delayed(const Duration(milliseconds: 250), () {
+          if (mounted) {
+            spawnNote();
+          }
+        });
+      }
     });
   }
 
@@ -116,7 +126,7 @@ class _RhythmGameScreenState extends State<RhythmGameScreen> {
         return PlayerResult(name, score);
       }
 
-      return PlayerResult(name, random.nextInt(20) - 5);
+      return PlayerResult(name, random.nextInt(20));
     }).toList();
 
     results.sort((a, b) => b.score.compareTo(a.score));
@@ -136,60 +146,119 @@ class _RhythmGameScreenState extends State<RhythmGameScreen> {
   @override
   void dispose() {
     gameTimer?.cancel();
-    beatTimer?.cancel();
+    noteTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: isBeatTime ? Colors.green : bgColor,
+      backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: bgColor,
         foregroundColor: Colors.white,
         title: const Text('리듬게임'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: GestureDetector(
+        onTap: tapBeat,
+        child: Stack(
           children: [
-            Text(
-              '남은 시간: $remainingTime초',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
+            Positioned(
+              top: 24,
+              left: 24,
+              child: Text(
+                '남은 시간: $remainingTime초',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                ),
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              '점수: $score',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 42,
-                fontWeight: FontWeight.bold,
+            Positioned(
+              top: 60,
+              left: 24,
+              child: Text(
+                '점수: $score',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            const SizedBox(height: 60),
-            Text(
-              isBeatTime ? 'BEAT!' : '기다려...',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 38,
-                fontWeight: FontWeight.bold,
+
+            const Positioned(
+              top: 130,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  '원이 선에 닿을 때 TAP!',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 20,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 50),
-            ElevatedButton(
-              onPressed: tapBeat,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(220, 220),
-                shape: const CircleBorder(),
-                backgroundColor: Colors.white,
-                foregroundColor: bgColor,
+
+            Positioned(
+              top: hitLineY,
+              left: 40,
+              right: 40,
+              child: Container(
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: const Text(
-                'TAP',
-                style: TextStyle(fontSize: 34),
+            ),
+
+            if (noteActive)
+              Positioned(
+                top: noteY,
+                left: MediaQuery.of(context).size.width / 2 - 35,
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: const BoxDecoration(
+                    color: Colors.pinkAccent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '♪',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 34,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            Positioned(
+              bottom: 50,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: tapBeat,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(220, 70),
+                    backgroundColor: Colors.white,
+                    foregroundColor: bgColor,
+                  ),
+                  child: const Text(
+                    'TAP',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
