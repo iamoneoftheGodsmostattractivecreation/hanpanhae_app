@@ -104,10 +104,13 @@ class HomeScreen extends StatelessWidget {
     print("1");
     try {
       final roomcode = makeRoomCode();
+      final hostName = '플레이어${Random().nextInt(999)}';
       print("2");
       await FirebaseFirestore.instance.collection('rooms').doc(roomcode).set({
         'roomCode': roomcode,
-        'players': ['나'],
+        'players': ['플레이어${Random().nextInt(999)}'],
+        'host': hostName,
+        'readyPlayers': [],
         'createdAt': FieldValue.serverTimestamp(),
         'selectedGame': '',
         'gameStarted': false,
@@ -160,6 +163,12 @@ class HomeScreen extends StatelessWidget {
                 print('방 존재함? ${roomDoc.exists}');
 
                 if (roomDoc.exists) {
+                  await FirebaseFirestore.instance
+                      .collection('rooms')
+                      .doc(roomcode)
+                      .update({
+                    'players': FieldValue.arrayUnion(['친구']),
+                  });
                   Navigator.pop(context);
 
                   Navigator.push(
@@ -622,10 +631,12 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
                 child: const Text('다음'),
               ),
             ),
-            const Positioned(
+            Positioned(
               left: 16,
               bottom: 16,
-              child: ChatBox(roomcode: 'global'),
+              child: ChatBox(
+                roomcode: widget.roomcode,
+              ),
             ),
           ],
         ),
@@ -771,10 +782,10 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
                 ],
               ),
             ),
-            const Positioned(
+            Positioned(
               left: 16,
               bottom: 16,
-              child: ChatBox(roomcode: 'global'),
+              child: ChatBox(roomcode: widget.roomcode),
             ),
           ],
         ));
@@ -789,11 +800,11 @@ class WaitingRoomScreen extends StatelessWidget {
     required this.roomcode,
   });
 
-  Widget getGameScreen(String selectedGame) {
+  Widget getGameScreen(String selectedGame, List<String> players) {
     if (selectedGame == '틀린말찾기') {
       return WrongWordGameScreen(
         gameTime: 30,
-        players: const ['나'],
+        players: players,
         punishmentType: '랜덤 벌칙',
       );
     }
@@ -801,7 +812,7 @@ class WaitingRoomScreen extends StatelessWidget {
     if (selectedGame == '리듬게임') {
       return RhythmGameScreen(
         gameTime: 30,
-        players: const ['나'],
+        players: players,
         punishmentType: '랜덤 벌칙',
       );
     }
@@ -809,7 +820,7 @@ class WaitingRoomScreen extends StatelessWidget {
     if (selectedGame == '초록칸누르기') {
       return GreenTileGameScreen(
         gameTime: 30,
-        players: const ['나'],
+        players: players,
         punishmentType: '랜덤 벌칙',
       );
     }
@@ -817,14 +828,14 @@ class WaitingRoomScreen extends StatelessWidget {
     if (selectedGame == '그림맞추기') {
       return PictureCategoryScreen(
         gameTime: 30,
-        players: const ['나'],
+        players: players,
         punishmentType: '랜덤 벌칙',
       );
     }
 
     return TapGameScreen(
       gameTime: 30,
-      players: const ['나'],
+      players: players,
       punishmentType: '랜덤 벌칙',
     );
   }
@@ -836,41 +847,141 @@ class WaitingRoomScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: bgColor,
         foregroundColor: Colors.white,
-        title: const Text('대기실'),
+        title: Text('대기실 $roomcode'),
       ),
       body: StreamBuilder<DocumentSnapshot>(
+        //streambuilder가 실시간으로 화면을 그릴 준비를 하고 있다가
+        //stream에서 새 데이터가 오면 build()를 다시 실행함
         stream: FirebaseFirestore.instance
             .collection('rooms')
             .doc(roomcode)
-            .snapshots(),
+            .snapshots(), //= "계속" 감시해 ; 멀티플레이게임만들때 꼭필요함
         builder: (context, snapshot) {
+          //데이터가 없니?
           if (!snapshot.hasData) {
             return const Center(
               child: CircularProgressIndicator(),
             );
-          }
+          } //긍까 참가자 입장 감시,게임 선택 감시,게임 시작 감시,
+          //방장 변경 감시,Ready 상태 감시를 한번에 하고있는거임
 
           final data = snapshot.data!.data() as Map<String, dynamic>;
+
+          final players = List<String>.from(data['players'] ?? []);
+          final host = data['host'] ?? '';
+          final readyPlayers = List<String>.from(data['readyPlayers'] ?? []);
+          final allReady = players.every(
+            //플레이어 전부 검사
+            (player) => readyPlayers.contains(player),
+          );
 
           if (data['gameStarted'] == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               final selectedGame = data['selectedGame'] as String;
+
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => getGameScreen(selectedGame),
+                  builder: (_) => getGameScreen(selectedGame, players),
                 ),
               );
             });
           }
 
-          return const Center(
-            child: Text(
-              '방장이 게임을 고르는 중...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-              ),
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '참가자 목록',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '방 코드: $roomcode',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: players.length,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 14),
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.14),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.white,
+                              foregroundColor: bgColor,
+                              child: Text('${index + 1}'),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                players[index] == host
+                                    ? '👑 ${players[index]}'
+                                    : '🙂 ${players[index]}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              readyPlayers.contains(players[index])
+                                  ? 'READY'
+                                  : 'NOT READY',
+                              style: TextStyle(
+                                color: readyPlayers.contains(players[index])
+                                    ? Colors.green
+                                    : Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        await FirebaseFirestore.instance
+                            .collection('rooms')
+                            .doc(roomcode)
+                            .update({
+                          'readyPlayers': FieldValue.arrayUnion(
+                            [players.first],
+                          ),
+                        });
+                      },
+                      child: const Text('READY'),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      allReady ? '전원 준비 완료!' : '대기 중...',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                )
+              ],
             ),
           );
         },
