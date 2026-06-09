@@ -11,6 +11,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'widgets/chat_box.dart';
 
+// TODO: 닉네임 입력 Dialog 만들기
+// TODO: host 표시
+// TODO: readyPlayers 연결
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
