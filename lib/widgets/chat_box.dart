@@ -7,10 +7,11 @@ bool globalChatOpen = false;
 
 class ChatBox extends StatefulWidget {
   final String roomcode;
-
+  final String myName;
   const ChatBox({
     super.key,
     required this.roomcode,
+    required this.myName,
   });
 
   @override
@@ -30,7 +31,7 @@ class _ChatBoxState extends State<ChatBox> {
         .doc(widget.roomcode)
         .collection('messages')
         .add({
-      'sender': '나',
+      'sender': widget.myName,
       'text': text,
       'createdAt': FieldValue.serverTimestamp(),
     });

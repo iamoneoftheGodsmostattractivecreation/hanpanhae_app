@@ -37,9 +37,15 @@ class MyApp extends StatelessWidget {
 }
 
 // 홈 화면
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key}); //HomeScreen 객체 생성 가능하게 해주는 코드
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String myName = '';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,8 +66,13 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 50),
                 ElevatedButton(
-                  onPressed: () {
-                    createRoom(context);
+                  onPressed: () async {
+                    if (myName.isEmpty) {
+                      await showNicknameDialog();
+                    }
+                    if (myName.isNotEmpty) {
+                      createRoom(context); //context: 현재화면
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(220, 60),
@@ -84,10 +95,13 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Positioned(
+          Positioned(
             left: 16,
             bottom: 16,
-            child: ChatBox(roomcode: 'global'),
+            child: ChatBox(
+              roomcode: 'global',
+              myName: myName,
+            ),
           ),
         ],
       ),
@@ -103,16 +117,52 @@ class HomeScreen extends StatelessWidget {
     ).join();
   }
 
+  Future<void> showNicknameDialog() async {
+    final TextEditingController nicknameController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('닉네임 입력'),
+          content: TextField(
+            controller: nicknameController,
+            decoration: const InputDecoration(
+              hintText: '예: 서영',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                final nickname = nicknameController.text.trim();
+
+                if (nickname.isNotEmpty) {
+                  setState(() {
+                    myName = nickname;
+                  });
+
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+
+    nicknameController.dispose();
+  }
+
   Future<void> createRoom(BuildContext context) async {
     print("1");
     try {
       final roomcode = makeRoomCode();
-      final hostName = '플레이어${Random().nextInt(999)}';
       print("2");
       await FirebaseFirestore.instance.collection('rooms').doc(roomcode).set({
         'roomCode': roomcode,
-        'players': ['플레이어${Random().nextInt(999)}'],
-        'host': hostName,
+        'players': [myName],
+        'host': myName,
         'readyPlayers': [],
         'createdAt': FieldValue.serverTimestamp(),
         'selectedGame': '',
@@ -124,6 +174,7 @@ class HomeScreen extends StatelessWidget {
         MaterialPageRoute(
           builder: (_) => GroupSetupScreen(
             roomcode: roomcode,
+            myName: myName,
           ),
         ),
       );
@@ -170,7 +221,7 @@ class HomeScreen extends StatelessWidget {
                       .collection('rooms')
                       .doc(roomcode)
                       .update({
-                    'players': FieldValue.arrayUnion(['친구']),
+                    'players': FieldValue.arrayUnion([myName]),
                   });
                   Navigator.pop(context);
 
@@ -179,6 +230,7 @@ class HomeScreen extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (_) => WaitingRoomScreen(
                         roomcode: roomcode,
+                        myName: myName,
                       ),
                     ),
                   );
@@ -198,10 +250,12 @@ class HomeScreen extends StatelessWidget {
 // 그룹 설정 화면 (친구 추가됨, 플레이어목록 변함)
 class GroupSetupScreen extends StatefulWidget {
   final String roomcode;
+  final String myName;
 
   const GroupSetupScreen({
     super.key,
     required this.roomcode,
+    required this.myName,
   });
 
   @override
@@ -231,6 +285,7 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
         builder: (_) => GameSelectScreen(
           players: players,
           roomcode: widget.roomcode,
+          myName: widget.myName,
         ), //이동할 화면을 생성하고, 현재 players 리스트를 다음 화면으로 넘김
       ),
     );
@@ -350,7 +405,10 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
           Positioned(
             left: 16,
             bottom: 16,
-            child: ChatBox(roomcode: widget.roomcode),
+            child: ChatBox(
+              roomcode: widget.roomcode,
+              myName: widget.myName,
+            ),
             //const는 앱 실행 전에 이미 값이 확정되는 것에만 붙일 수 있어.
             //근데 widget.roomcode는:
             //방 만들기 누름
@@ -371,11 +429,13 @@ class _GroupSetupScreenState extends State<GroupSetupScreen> {
 class GameSelectScreen extends StatefulWidget {
   final List<String> players;
   final String roomcode;
+  final String myName;
 
   const GameSelectScreen({
     super.key,
     required this.players,
     required this.roomcode,
+    required this.myName,
   }); //required : 이 값 반드시 넣어야함
 
   @override
@@ -400,6 +460,7 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
           players: widget.players,
           selectedGame: selectedGame,
           roomcode: widget.roomcode,
+          myName: widget.myName,
         ),
       ),
     );
@@ -505,7 +566,10 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
             Positioned(
               left: 16,
               bottom: 16,
-              child: ChatBox(roomcode: widget.roomcode),
+              child: ChatBox(
+                roomcode: widget.roomcode,
+                myName: widget.myName,
+              ),
             ),
           ],
         ),
@@ -519,11 +583,13 @@ class PunishmentSelectScreen extends StatefulWidget {
   final List<String> players; //final: 실행중에결정되어 그뒤로 못바꾸는문법
   final String selectedGame;
   final String roomcode;
+  final String myName;
   const PunishmentSelectScreen({
     super.key,
     required this.players,
     required this.selectedGame,
     required this.roomcode,
+    required this.myName,
   });
 
   @override
@@ -586,6 +652,7 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
           punishmentType: selectedPunishment,
           selectedGame: widget.selectedGame,
           roomcode: widget.roomcode,
+          myName: widget.myName,
         ),
       ),
     );
@@ -639,6 +706,7 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
               bottom: 16,
               child: ChatBox(
                 roomcode: widget.roomcode,
+                myName: widget.myName,
               ),
             ),
           ],
@@ -654,6 +722,7 @@ class TimeSelectScreen extends StatefulWidget {
   final String punishmentType;
   final String selectedGame;
   final String roomcode;
+  final String myName;
 
   const TimeSelectScreen({
     super.key,
@@ -661,6 +730,7 @@ class TimeSelectScreen extends StatefulWidget {
     required this.punishmentType,
     required this.selectedGame,
     required this.roomcode,
+    required this.myName,
   });
 
   @override
@@ -788,7 +858,10 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
             Positioned(
               left: 16,
               bottom: 16,
-              child: ChatBox(roomcode: widget.roomcode),
+              child: ChatBox(
+                roomcode: widget.roomcode,
+                myName: widget.myName,
+              ),
             ),
           ],
         ));
@@ -797,10 +870,12 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
 
 class WaitingRoomScreen extends StatelessWidget {
   final String roomcode;
+  final String myName;
 
   const WaitingRoomScreen({
     super.key,
     required this.roomcode,
+    required this.myName,
   });
 
   Widget getGameScreen(String selectedGame, List<String> players) {
@@ -969,7 +1044,7 @@ class WaitingRoomScreen extends StatelessWidget {
                             .doc(roomcode)
                             .update({
                           'readyPlayers': FieldValue.arrayUnion(
-                            [players.first],
+                            [myName],
                           ),
                         });
                       },
