@@ -83,8 +83,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                    onPressed: () {
-                      showJoinRoomDialog(context);
+                    onPressed: () async {
+                      if (myName.isEmpty) {
+                        await showNicknameDialog();
+                      }
+                      if (myName.isNotEmpty) {
+                        showJoinRoomDialog(context);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(220, 60),
@@ -172,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => GroupSetupScreen(
+          builder: (_) => WaitingRoomScreen(
             roomcode: roomcode,
             myName: myName,
           ),
@@ -918,6 +923,15 @@ class WaitingRoomScreen extends StatelessWidget {
     );
   }
 
+  Future<void> leaveRoom(BuildContext context) async {
+    await FirebaseFirestore.instance.collection('rooms').doc(roomcode).update({
+      'players': FieldValue.arrayRemove([myName]),
+      'readyPlayers': FieldValue.arrayRemove([myName]),
+    });
+
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -948,6 +962,7 @@ class WaitingRoomScreen extends StatelessWidget {
           final players = List<String>.from(data['players'] ?? []);
           final host = data['host'] ?? '';
           final readyPlayers = List<String>.from(data['readyPlayers'] ?? []);
+          final isHost = myName == host;
           final allReady = players.every(
             //플레이어 전부 검사
             (player) => readyPlayers.contains(player),
@@ -966,101 +981,162 @@ class WaitingRoomScreen extends StatelessWidget {
             });
           }
 
-          return Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '참가자 목록',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '방 코드: $roomcode',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: players.length,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 14),
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.14),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.white,
-                              foregroundColor: bgColor,
-                              child: Text('${index + 1}'),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                players[index] == host
-                                    ? '👑 ${players[index]}'
-                                    : '🙂 ${players[index]}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              readyPlayers.contains(players[index])
-                                  ? 'READY'
-                                  : 'NOT READY',
-                              style: TextStyle(
-                                color: readyPlayers.contains(players[index])
-                                    ? Colors.green
-                                    : Colors.white70,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Column(
+          return Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        await FirebaseFirestore.instance
-                            .collection('rooms')
-                            .doc(roomcode)
-                            .update({
-                          'readyPlayers': FieldValue.arrayUnion(
-                            [myName],
-                          ),
-                        });
-                      },
-                      child: const Text('READY'),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      allReady ? '전원 준비 완료!' : '대기 중...',
-                      style: const TextStyle(
-                        color: Colors.white70,
+                    const Text(
+                      '참가자 목록',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '방 코드: $roomcode',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: players.length,
+                        itemBuilder: (context, index) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.14),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: bgColor,
+                                  child: Text('${index + 1}'),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    players[index] == host
+                                        ? '👑 ${players[index]}'
+                                        : '🙂 ${players[index]}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  readyPlayers.contains(players[index])
+                                      ? 'READY'
+                                      : 'NOT READY',
+                                  style: TextStyle(
+                                    color: readyPlayers.contains(players[index])
+                                        ? Colors.green
+                                        : Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            allReady ? '전원 준비 완료!' : '대기 중...',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          if (isHost)
+                            ElevatedButton(
+                              onPressed: allReady
+                                  ? () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => GameSelectScreen(
+                                            players: players,
+                                            roomcode: roomcode,
+                                            myName: myName,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                              child: const Text('게임 선택하러 가기'),
+                            )
+                          else
+                            const Text(
+                              '방장이 게임을 선택하는 중...',
+                              style: TextStyle(
+                                color: Colors.white70,
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
                   ],
-                )
-              ],
-            ),
+                ),
+              ),
+              Positioned(
+                top: 20,
+                right: 20,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final isReady = readyPlayers.contains(myName);
+
+                    await FirebaseFirestore.instance
+                        .collection('rooms')
+                        .doc(roomcode)
+                        .update({
+                      'readyPlayers': isReady
+                          ? FieldValue.arrayRemove([myName])
+                          : FieldValue.arrayUnion([myName]),
+                    });
+                  },
+                  icon: const Icon(Icons.check_circle),
+                  label: Text(
+                    readyPlayers.contains(myName) ? 'CANCEL' : 'READY',
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(150, 55),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 20,
+                left: 20,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    leaveRoom(context);
+                  },
+                  icon: const Icon(Icons.exit_to_app),
+                  label: const Text('나가기'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(120, 50),
+                    backgroundColor: Colors.white,
+                    foregroundColor: bgColor,
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
