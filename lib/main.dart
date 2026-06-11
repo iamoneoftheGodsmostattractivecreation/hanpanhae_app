@@ -172,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         'selectedGame': '',
         'gameStarted': false,
+        'roomStatus': 'waiting',
       });
       print("3");
       Navigator.push(
@@ -449,14 +450,13 @@ class GameSelectScreen extends StatefulWidget {
 } // _ 가 앞에 붙는 이유는 이 파일 내부에서만 사용 가능(private) 이라는 Dart 문법 ! 외부에서 막 쓰지말라는 뜻
 
 class _GameSelectScreenState extends State<GameSelectScreen> {
-  String selectedGame = '연타게임';
-
-  Future<void> goToPunishmentSelect() async {
+  Future<void> goToPunishmentSelect(String selectedGame) async {
     await FirebaseFirestore.instance
         .collection('rooms')
         .doc(widget.roomcode)
         .update({
       'selectedGame': selectedGame,
+      'roomState': 'punishment_select',
     });
     Navigator.push(
       context,
@@ -471,13 +471,16 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
     );
   }
 
-  Widget gameButton(String gameName) {
+  Widget gameButton(String gameName, String selectedGame) {
     final selected = selectedGame == gameName;
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedGame = gameName;
+      onTap: () async {
+        await FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(widget.roomcode)
+            .update({
+          'selectedGame': gameName,
         });
       },
       child: Container(
@@ -525,59 +528,63 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
         foregroundColor: Colors.white,
         title: const Text('게임 선택'),
       ),
-      body: Padding(
-        //위젯이름이 Padding인거임
-        padding: const EdgeInsets.all(
-            24), // Padding 위젯의 속성: 안의 내용물을 상하좌우 24만큼 안쪽으로 밀어라
-        child: Stack(
-          //겹쳐놓는 화면구조
-          children: [
-            Column(
-              //세로로 나열하는 문법
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, //가로축 기준 시작점(왼쪽)으로 정렬하라
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(widget.roomcode)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final selectedGame = data['selectedGame'] ?? '연타게임';
+
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Stack(
               children: [
-                const Text(
-                  '어떤 게임 할까?', //이 글자는 고정
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '어떤 게임 할까?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    gameButton('연타게임', selectedGame),
+                    gameButton('리듬게임', selectedGame),
+                    gameButton('틀린말찾기', selectedGame),
+                    gameButton('초록칸누르기', selectedGame),
+                    gameButton('그림맞추기', selectedGame),
+                  ],
+                ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      goToPunishmentSelect(selectedGame);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(120, 56),
+                      backgroundColor: Colors.white,
+                      foregroundColor: bgColor,
+                    ),
+                    child: const Text('다음'),
                   ),
                 ),
-                const SizedBox(height: 30),
-                gameButton('연타게임'),
-                gameButton('리듬게임'),
-                gameButton('틀린말찾기'),
-                gameButton('초록칸누르기'),
-                gameButton('그림맞추기')
               ],
             ),
-            Positioned(
-              //정확환 위치 지정하는 문법
-              right: 0, //오른쪽 끝에 붙여라
-              bottom: 0, // 아래끝에 붙여라           결과적으로 오른쪽 아래끝에 버튼 생김!!
-              child: ElevatedButton(
-                //배치할 실제 위젯
-                onPressed: goToPunishmentSelect,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(120, 56),
-                  backgroundColor: Colors.white,
-                  foregroundColor: bgColor,
-                ),
-                child: const Text('입장'),
-              ),
-            ),
-            Positioned(
-              left: 16,
-              bottom: 16,
-              child: ChatBox(
-                roomcode: widget.roomcode,
-                myName: widget.myName,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -967,6 +974,23 @@ class WaitingRoomScreen extends StatelessWidget {
             //플레이어 전부 검사
             (player) => readyPlayers.contains(player),
           );
+          final roomState = data['roomState'] ?? 'waiting';
+
+          if (roomState == 'game_select') {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              // execute {...} after current Frame has been rendered.
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GameSelectScreen(
+                    players: players,
+                    roomcode: roomcode,
+                    myName: myName,
+                  ),
+                ),
+              );
+            });
+          } // click 방장 button -> roomState = game_select -> detecting everyone's StreamBuilder -> everyone move to GameSelectScreen
 
           if (data['gameStarted'] == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1065,17 +1089,15 @@ class WaitingRoomScreen extends StatelessWidget {
                           if (isHost)
                             ElevatedButton(
                               onPressed: allReady
-                                  ? () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => GameSelectScreen(
-                                            players: players,
-                                            roomcode: roomcode,
-                                            myName: myName,
-                                          ),
-                                        ),
-                                      );
+                                  ? () async {
+                                      //we dont have to call Navigator.push ourselves
+                                      await FirebaseFirestore
+                                          .instance //when firestore changes, streambuilder detects it and moves all automatically
+                                          .collection('rooms')
+                                          .doc(roomcode)
+                                          .update({
+                                        'roomStatus': 'game_selected',
+                                      });
                                     }
                                   : null,
                               child: const Text('게임 선택하러 가기'),
