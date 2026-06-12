@@ -172,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         'selectedGame': '',
         'gameStarted': false,
-        'roomStatus': 'waiting',
+        'roomState': 'waiting',
       });
       print("3");
       Navigator.push(
@@ -458,17 +458,6 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
       'selectedGame': selectedGame,
       'roomState': 'punishment_select',
     });
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PunishmentSelectScreen(
-          players: widget.players,
-          selectedGame: selectedGame,
-          roomcode: widget.roomcode,
-          myName: widget.myName,
-        ),
-      ),
-    );
   }
 
   Widget gameButton(String gameName, String selectedGame) {
@@ -542,6 +531,23 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
 
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final selectedGame = data['selectedGame'] ?? '연타게임';
+          final roomState = data['roomState'] ?? 'game_select';
+
+          if (roomState == 'punishment_select') {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PunishmentSelectScreen(
+                    players: widget.players,
+                    selectedGame: selectedGame,
+                    roomcode: widget.roomcode,
+                    myName: widget.myName,
+                  ),
+                ),
+              );
+            });
+          }
 
           return Padding(
             padding: const EdgeInsets.all(24),
@@ -616,9 +622,16 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
         selectedPunishment == title; //“현재 선택된 벌칙이 이 버튼 제목이랑 같은지 검사해서 결과 저장”
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         setState(() {
           selectedPunishment = title;
+        });
+
+        await FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(widget.roomcode)
+            .update({
+          'punishmentType': title,
         });
       },
       child: Container(
@@ -655,19 +668,14 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
     );
   }
 
-  void goToTimeSelect() {
-    Navigator.push(
-      context, //현재 화면 기준으로 새화면 올려라 라는 뜻
-      MaterialPageRoute(
-        builder: (_) => TimeSelectScreen(
-          players: widget.players,
-          punishmentType: selectedPunishment,
-          selectedGame: widget.selectedGame,
-          roomcode: widget.roomcode,
-          myName: widget.myName,
-        ),
-      ),
-    );
+  Future<void> goToTimeSelect() async {
+    await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .update({
+      'punishmentType': selectedPunishment,
+      'roomState': 'time_select',
+    });
   }
 
   @override
@@ -679,50 +687,85 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
         foregroundColor: Colors.white,
         title: const Text('벌칙 설정'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '벌칙을 어떻게 정할까?',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(widget.roomcode)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final punishmentType = data['punishmentType'] ?? selectedPunishment;
+          final roomState = data['roomState'] ?? 'punishment_select';
+
+          if (roomState == 'time_select') {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TimeSelectScreen(
+                    players: widget.players,
+                    punishmentType: punishmentType,
+                    selectedGame: widget.selectedGame,
+                    roomcode: widget.roomcode,
+                    myName: widget.myName,
                   ),
                 ),
-                const SizedBox(height: 30),
-                punishmentButton('랜덤 벌칙'),
-                punishmentButton('팀장이 직접 선택'),
-                punishmentButton('직접 입력'),
+              );
+            });
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '벌칙을 어떻게 정할까?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    punishmentButton('랜덤 벌칙'),
+                    punishmentButton('팀장이 직접 선택'),
+                    punishmentButton('직접 입력'),
+                  ],
+                ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: ElevatedButton(
+                    onPressed: goToTimeSelect,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(120, 56),
+                      backgroundColor: Colors.white,
+                      foregroundColor: bgColor,
+                    ),
+                    child: const Text('다음'),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  bottom: 16,
+                  child: ChatBox(
+                    roomcode: widget.roomcode,
+                    myName: widget.myName,
+                  ),
+                ),
               ],
             ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: ElevatedButton(
-                onPressed: goToTimeSelect,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(120, 56),
-                  backgroundColor: Colors.white,
-                  foregroundColor: bgColor,
-                ),
-                child: const Text('다음'),
-              ),
-            ),
-            Positioned(
-              left: 16,
-              bottom: 16,
-              child: ChatBox(
-                roomcode: widget.roomcode,
-                myName: widget.myName,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -756,9 +799,16 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
     final selected = selectedTime == seconds;
 
     return ElevatedButton(
-      onPressed: () {
+      onPressed: () async {
         setState(() {
           selectedTime = seconds;
+        });
+
+        await FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(widget.roomcode)
+            .update({
+          'gameTime': seconds,
         });
       },
       style: ElevatedButton.styleFrom(
@@ -777,106 +827,138 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
         .update({
       'gameStarted': true,
     });
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) {
-          if (widget.selectedGame == '틀린말찾기') {
-            return WrongWordGameScreen(
-              gameTime: selectedTime,
-              players: widget.players,
-              punishmentType: widget.punishmentType,
-            );
-          }
-          if (widget.selectedGame == '리듬게임') {
-            return RhythmGameScreen(
-              gameTime: selectedTime,
-              players: widget.players,
-              punishmentType: widget.punishmentType,
-            );
-          }
-          if (widget.selectedGame == '초록칸누르기') {
-            return GreenTileGameScreen(
-              gameTime: selectedTime,
-              players: widget.players,
-              punishmentType: widget.punishmentType,
-            );
-          }
-          if (widget.selectedGame == '그림맞추기') {
-            return PictureCategoryScreen(
-              gameTime: selectedTime,
-              players: widget.players,
-              punishmentType: widget.punishmentType,
-            );
-          }
-
-          return TapGameScreen(
-            gameTime: selectedTime,
-            players: widget.players,
-            punishmentType: widget.punishmentType,
-          );
-        },
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: bgColor,
+      appBar: AppBar(
         backgroundColor: bgColor,
-        appBar: AppBar(
-          backgroundColor: bgColor,
-          foregroundColor: Colors.white,
-          title: const Text('시간 선택'),
-        ),
-        body: Stack(
-          children: [
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    '몇 초 동안 할까?',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+        foregroundColor: Colors.white,
+        title: const Text('시간 선택'),
+      ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(widget.roomcode)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final selectedTimeFromServer = data['gameTime'] ?? selectedTime;
+          final gameStarted = data['gameStarted'] ?? false;
+
+          if (gameStarted == true) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) {
+                    if (widget.selectedGame == '틀린말찾기') {
+                      return WrongWordGameScreen(
+                        gameTime: selectedTimeFromServer,
+                        players: widget.players,
+                        punishmentType: widget.punishmentType,
+                      );
+                    }
+
+                    if (widget.selectedGame == '리듬게임') {
+                      return RhythmGameScreen(
+                        gameTime: selectedTimeFromServer,
+                        players: widget.players,
+                        punishmentType: widget.punishmentType,
+                      );
+                    }
+
+                    if (widget.selectedGame == '초록칸누르기') {
+                      return GreenTileGameScreen(
+                        gameTime: selectedTimeFromServer,
+                        players: widget.players,
+                        punishmentType: widget.punishmentType,
+                      );
+                    }
+
+                    if (widget.selectedGame == '그림맞추기') {
+                      return PictureCategoryScreen(
+                        gameTime: selectedTimeFromServer,
+                        players: widget.players,
+                        punishmentType: widget.punishmentType,
+                      );
+                    }
+
+                    return TapGameScreen(
+                      gameTime: selectedTimeFromServer,
+                      players: widget.players,
+                      punishmentType: widget.punishmentType,
+                      roomcode: widget.roomcode,
+                      myName: widget.myName,
+                    );
+                  },
+                ),
+              );
+            });
+          }
+
+          return Stack(
+            children: [
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      '몇 초 동안 할까?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      timeButton(15),
-                      const SizedBox(width: 12),
-                      timeButton(30),
-                      const SizedBox(width: 12),
-                      timeButton(60),
-                    ],
-                  ),
-                  const SizedBox(height: 45),
-                  ElevatedButton(
-                    onPressed: startGame,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(220, 60),
-                      backgroundColor: Colors.white,
-                      foregroundColor: bgColor,
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        timeButton(15),
+                        const SizedBox(width: 12),
+                        timeButton(30),
+                        const SizedBox(width: 12),
+                        timeButton(60),
+                      ],
                     ),
-                    child: const Text('게임 시작', style: TextStyle(fontSize: 20)),
-                  ),
-                ],
+                    const SizedBox(height: 45),
+                    ElevatedButton(
+                      onPressed: startGame,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(220, 60),
+                        backgroundColor: Colors.white,
+                        foregroundColor: bgColor,
+                      ),
+                      child: const Text(
+                        '게임 시작',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Positioned(
-              left: 16,
-              bottom: 16,
-              child: ChatBox(
-                roomcode: widget.roomcode,
-                myName: widget.myName,
+              Positioned(
+                left: 16,
+                bottom: 16,
+                child: ChatBox(
+                  roomcode: widget.roomcode,
+                  myName: widget.myName,
+                ),
               ),
-            ),
-          ],
-        ));
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -927,14 +1009,39 @@ class WaitingRoomScreen extends StatelessWidget {
       gameTime: 30,
       players: players,
       punishmentType: '랜덤 벌칙',
+      roomcode: roomcode,
+      myName: myName,
     );
   }
 
   Future<void> leaveRoom(BuildContext context) async {
-    await FirebaseFirestore.instance.collection('rooms').doc(roomcode).update({
-      'players': FieldValue.arrayRemove([myName]),
-      'readyPlayers': FieldValue.arrayRemove([myName]),
-    });
+    final roomRef =
+        FirebaseFirestore.instance.collection('rooms').doc(roomcode);
+
+    final roomDoc = await roomRef.get();
+
+    if (!roomDoc.exists) {
+      Navigator.pop(context);
+      return;
+    }
+
+    final data = roomDoc.data() as Map<String, dynamic>;
+
+    final players = List<String>.from(data['players'] ?? []);
+    final host = data['host'] ?? '';
+
+    final remainingPlayers =
+        players.where((player) => player != myName).toList();
+
+    if (remainingPlayers.isEmpty) {
+      await roomRef.delete();
+    } else {
+      await roomRef.update({
+        'players': FieldValue.arrayRemove([myName]),
+        'readyPlayers': FieldValue.arrayRemove([myName]),
+        'host': host == myName ? remainingPlayers.first : host,
+      });
+    }
 
     Navigator.pop(context);
   }
@@ -1096,7 +1203,7 @@ class WaitingRoomScreen extends StatelessWidget {
                                           .collection('rooms')
                                           .doc(roomcode)
                                           .update({
-                                        'roomStatus': 'game_selected',
+                                        'roomState': 'game_select',
                                       });
                                     }
                                   : null,

@@ -5,17 +5,22 @@ import '../constants/app_colors.dart';
 
 import '../models/player_result.dart';
 import '../screens/result_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TapGameScreen extends StatefulWidget {
   final int gameTime;
   final List<String> players;
   final String punishmentType;
+  final String roomcode;
+  final String myName;
 
   const TapGameScreen({
     super.key,
     required this.gameTime,
     required this.players,
     required this.punishmentType,
+    required this.roomcode,
+    required this.myName,
   });
 
   @override
@@ -82,11 +87,12 @@ class _TapGameScreenState extends State<TapGameScreen> {
     return '직접 입력한 벌칙';
   }
 
-  void goToResultScreen() {
+  Future<void> goToResultScreen() async {
+    await saveResult(score);
     final random = Random();
 
     final results = widget.players.map((name) {
-      if (name == '나') {
+      if (name == widget.myName) {
         return PlayerResult(name, score);
       }
       return PlayerResult(name, random.nextInt(80) + 40);
@@ -154,5 +160,17 @@ class _TapGameScreenState extends State<TapGameScreen> {
       ),
     );
   }
-}
 
+  Future<void> saveResult(int score) async {
+    await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .collection('results')
+        .doc(widget.myName)
+        .set({
+      'name': widget.myName,
+      'score': score,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+}
