@@ -59,6 +59,17 @@ class _TapGameScreenState extends State<TapGameScreen> {
     });
   }
 
+  Future<String> loadFinalPunishment() async {
+    final roomDoc = await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .get();
+
+    final data = roomDoc.data() as Map<String, dynamic>;
+
+    return data['finalPunishment'] ?? '벌칙 없음';
+  }
+
   Future<void> goToResultScreen() async {
     await saveResult(score);
 
@@ -66,13 +77,15 @@ class _TapGameScreenState extends State<TapGameScreen> {
       final results = await loadResults();
 
       if (results.length >= widget.players.length) {
+        final finalPunishment = await loadFinalPunishment();
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => ResultScreen(
               results: results,
               punishmentType: widget.punishmentType,
-              punishment: decidePunishment(),
+              punishment: finalPunishment,
             ),
           ),
         );

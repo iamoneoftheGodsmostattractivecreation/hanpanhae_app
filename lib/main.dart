@@ -84,9 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                     onPressed: () async {
-                      if (myName.isEmpty) {
-                        await showNicknameDialog();
-                      }
+                      myName = '';
+                      await showNicknameDialog();
                       if (myName.isNotEmpty) {
                         showJoinRoomDialog(context);
                       }
@@ -456,7 +455,7 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
         .doc(widget.roomcode)
         .update({
       'selectedGame': selectedGame,
-      'roomState': 'punirshment_select',
+      'roomState': 'punishment_select',
     });
   }
 
@@ -854,12 +853,38 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
     );
   }
 
+  String makeFinalPunishment() {
+    final randomPunishments = [
+      '음료수 사기',
+      '편의점 다녀오기',
+      '노래 한 소절 부르기',
+      '애교하기',
+      '다음 판 방장하기',
+      '골라준 사진으로 프로필사진 변경하기',
+    ];
+
+    if (widget.punishmentType == '랜덤 벌칙') {
+      return randomPunishments[Random().nextInt(randomPunishments.length)];
+    }
+
+    if (widget.punishmentType == '팀장이 직접 선택') {
+      return '팀장이 고른 벌칙';
+    }
+
+    return '직접 입력한 벌칙';
+  }
+
   Future<void> startGame() async {
+    final finalPunishment = makeFinalPunishment();
+
     await FirebaseFirestore.instance
         .collection('rooms')
         .doc(widget.roomcode)
         .update({
+      'gameTime': selectedTime,
       'gameStarted': true,
+      'roomState': 'playing',
+      'finalPunishment': finalPunishment,
     });
   }
 
