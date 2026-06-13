@@ -456,53 +456,66 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
         .doc(widget.roomcode)
         .update({
       'selectedGame': selectedGame,
-      'roomState': 'punishment_select',
+      'roomState': 'punirshment_select',
     });
   }
 
-  Widget gameButton(String gameName, String selectedGame) {
+  Widget gameButton(
+    String gameName,
+    String selectedGame,
+    bool isHost,
+  ) {
     final selected = selectedGame == gameName;
 
     return GestureDetector(
-      onTap: () async {
-        await FirebaseFirestore.instance
-            .collection('rooms')
-            .doc(widget.roomcode)
-            .update({
-          'selectedGame': gameName,
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.white.withOpacity(0.14),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Text(
-              gameName == '연타게임' // 게임 이름이 연타게임인가?
-                  ? '👆' //맞으면 손가락 이모지 출력
-                  : gameName == '틀린말찾기'
-                      ? '👀'
-                      : gameName == '초록칸누르기'
-                          ? '🟩'
-                          : gameName == '그림맞추기'
-                              ? '🖼️'
-                              : '🎵',
-              style: const TextStyle(fontSize: 28),
-            ),
-            const SizedBox(width: 16),
-            Text(
-              gameName,
-              style: TextStyle(
-                color: selected ? bgColor : Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+      onTap: isHost
+          ? () async {
+              await FirebaseFirestore.instance
+                  .collection('rooms')
+                  .doc(widget.roomcode)
+                  .update({
+                'selectedGame': gameName,
+              });
+            }
+          : null,
+      child: Opacity(
+        opacity: isHost
+            ? 1.0
+            : selected
+                ? 1.0
+                : 0.5,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: selected ? Colors.white : Colors.white.withOpacity(0.14),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Text(
+                gameName == '연타게임'
+                    ? '👆'
+                    : gameName == '틀린말찾기'
+                        ? '👀'
+                        : gameName == '초록칸누르기'
+                            ? '🟩'
+                            : gameName == '그림맞추기'
+                                ? '🖼️'
+                                : '🎵',
+                style: const TextStyle(fontSize: 28),
               ),
-            ),
-          ],
+              const SizedBox(width: 16),
+              Text(
+                gameName,
+                style: TextStyle(
+                  color: selected ? bgColor : Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -516,6 +529,7 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
         backgroundColor: bgColor,
         foregroundColor: Colors.white,
         title: const Text('게임 선택'),
+        automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -530,6 +544,8 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
           }
 
           final data = snapshot.data!.data() as Map<String, dynamic>;
+          final host = data['host'] ?? '';
+          final isHost = widget.myName == host;
           final selectedGame = data['selectedGame'] ?? '연타게임';
           final roomState = data['roomState'] ?? 'game_select';
 
@@ -556,37 +572,42 @@ class _GameSelectScreenState extends State<GameSelectScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '어떤 게임 할까?',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                    if (!isHost)
+                      const Center(
+                        child: Text(
+                          '방장이 게임 선택 중...',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
+                    if (!isHost) const SizedBox(height: 24),
                     const SizedBox(height: 30),
-                    gameButton('연타게임', selectedGame),
-                    gameButton('리듬게임', selectedGame),
-                    gameButton('틀린말찾기', selectedGame),
-                    gameButton('초록칸누르기', selectedGame),
-                    gameButton('그림맞추기', selectedGame),
+                    gameButton('연타게임', selectedGame, isHost),
+                    gameButton('리듬게임', selectedGame, isHost),
+                    gameButton('틀린말찾기', selectedGame, isHost),
+                    gameButton('초록칸누르기', selectedGame, isHost),
+                    gameButton('그림맞추기', selectedGame, isHost),
                   ],
                 ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      goToPunishmentSelect(selectedGame);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(120, 56),
-                      backgroundColor: Colors.white,
-                      foregroundColor: bgColor,
+                if (isHost)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        goToPunishmentSelect(selectedGame);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(120, 56),
+                        backgroundColor: Colors.white,
+                        foregroundColor: bgColor,
+                      ),
+                      child: const Text('다음'),
                     ),
-                    child: const Text('다음'),
                   ),
-                ),
               ],
             ),
           );
@@ -617,9 +638,12 @@ class PunishmentSelectScreen extends StatefulWidget {
 class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
   String selectedPunishment = '랜덤 벌칙';
 
-  Widget punishmentButton(String title) {
+  Widget punishmentButton(
+    String title,
+    String punishmentType,
+  ) {
     final selected =
-        selectedPunishment == title; //“현재 선택된 벌칙이 이 버튼 제목이랑 같은지 검사해서 결과 저장”
+        punishmentType == title; //“현재 선택된 벌칙이 이 버튼 제목이랑 같은지 검사해서 결과 저장”
 
     return GestureDetector(
       onTap: () async {
@@ -686,6 +710,7 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
         backgroundColor: bgColor,
         foregroundColor: Colors.white,
         title: const Text('벌칙 설정'),
+        automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -736,9 +761,18 @@ class _PunishmentSelectScreenState extends State<PunishmentSelectScreen> {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    punishmentButton('랜덤 벌칙'),
-                    punishmentButton('팀장이 직접 선택'),
-                    punishmentButton('직접 입력'),
+                    punishmentButton(
+                      '랜덤 벌칙',
+                      punishmentType,
+                    ),
+                    punishmentButton(
+                      '팀장이 직접 선택',
+                      punishmentType,
+                    ),
+                    punishmentButton(
+                      '직접 입력',
+                      punishmentType,
+                    ),
                   ],
                 ),
                 Positioned(
@@ -837,6 +871,7 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
         backgroundColor: bgColor,
         foregroundColor: Colors.white,
         title: const Text('시간 선택'),
+        automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -1037,7 +1072,7 @@ class WaitingRoomScreen extends StatelessWidget {
       await roomRef.delete();
     } else {
       await roomRef.update({
-        'players': FieldValue.arrayRemove([myName]),
+        'players': remainingPlayers,
         'readyPlayers': FieldValue.arrayRemove([myName]),
         'host': host == myName ? remainingPlayers.first : host,
       });
@@ -1054,6 +1089,7 @@ class WaitingRoomScreen extends StatelessWidget {
         backgroundColor: bgColor,
         foregroundColor: Colors.white,
         title: Text('대기실 $roomcode'),
+        automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<DocumentSnapshot>(
         //streambuilder가 실시간으로 화면을 그릴 준비를 하고 있다가
@@ -1115,7 +1151,7 @@ class WaitingRoomScreen extends StatelessWidget {
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(24, 90, 24, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1209,13 +1245,6 @@ class WaitingRoomScreen extends StatelessWidget {
                                   : null,
                               child: const Text('게임 선택하러 가기'),
                             )
-                          else
-                            const Text(
-                              '방장이 게임을 선택하는 중...',
-                              style: TextStyle(
-                                color: Colors.white70,
-                              ),
-                            ),
                         ],
                       ),
                     )
