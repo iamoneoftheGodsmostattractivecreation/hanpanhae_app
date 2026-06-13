@@ -59,6 +59,30 @@ class _TapGameScreenState extends State<TapGameScreen> {
     });
   }
 
+  Future<void> goToResultScreen() async {
+    await saveResult(score);
+
+    while (true) {
+      final results = await loadResults();
+
+      if (results.length >= widget.players.length) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ResultScreen(
+              results: results,
+              punishmentType: widget.punishmentType,
+              punishment: decidePunishment(),
+            ),
+          ),
+        );
+        break;
+      }
+
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
+
   void increaseScore() {
     if (isGameOver) return;
 
@@ -74,6 +98,7 @@ class _TapGameScreenState extends State<TapGameScreen> {
       '노래 한 소절 부르기',
       '애교하기',
       '다음 판 방장하기',
+      '골라준 사진으로 프로필사진 변경하기'
     ];
 
     if (widget.punishmentType == '랜덤 벌칙') {
@@ -85,31 +110,6 @@ class _TapGameScreenState extends State<TapGameScreen> {
     }
 
     return '직접 입력한 벌칙';
-  }
-
-  Future<void> goToResultScreen() async {
-    await saveResult(score);
-    final random = Random();
-
-    final results = widget.players.map((name) {
-      if (name == widget.myName) {
-        return PlayerResult(name, score);
-      }
-      return PlayerResult(name, random.nextInt(80) + 40);
-    }).toList();
-
-    results.sort((a, b) => b.score.compareTo(a.score));
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ResultScreen(
-          results: results,
-          punishmentType: widget.punishmentType,
-          punishment: decidePunishment(),
-        ),
-      ),
-    );
   }
 
   @override
@@ -172,5 +172,26 @@ class _TapGameScreenState extends State<TapGameScreen> {
       'score': score,
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  Future<List<PlayerResult>> loadResults() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .collection('results')
+        .get();
+
+    final results = snapshot.docs.map((doc) {
+      final data = doc.data();
+
+      return PlayerResult(
+        data['name'],
+        data['score'],
+      );
+    }).toList();
+
+    results.sort((a, b) => b.score.compareTo(a.score));
+
+    return results;
   }
 }
