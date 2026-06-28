@@ -95,67 +95,71 @@ class _WrongWordGameScreenState extends State<WrongWordGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
         backgroundColor: bgColor,
-        foregroundColor: Colors.white,
-        title: const Text('틀린말찾기'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Text(
-              '남은 시간: $remainingTime초',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
+        appBar: AppBar(
+          backgroundColor: bgColor,
+          foregroundColor: Colors.white,
+          title: const Text('틀린말찾기'),
+          automaticallyImplyLeading: false,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Text(
+                '남은 시간: $remainingTime초',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '점수: $score',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 34,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 12),
+              Text(
+                '점수: $score',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 30),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 3,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: List.generate(9, (index) {
-                  final word = index == answerIndex
-                      ? currentQuestion['wrong']!
-                      : currentQuestion['normal']!;
+              const SizedBox(height: 30),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  children: List.generate(9, (index) {
+                    final word = index == answerIndex
+                        ? currentQuestion['wrong']!
+                        : currentQuestion['normal']!;
 
-                  return GestureDetector(
-                    onTap: () => selectCell(index),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Center(
-                        child: Text(
-                          word,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                    return GestureDetector(
+                      onTap: () => selectCell(index),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Center(
+                          child: Text(
+                            word,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -222,6 +226,8 @@ class _WrongWordGameScreenState extends State<WrongWordGameScreen> {
               results: results,
               punishmentType: widget.punishmentType,
               punishment: finalPunishment,
+              roomcode: widget.roomcode,
+              myName: widget.myName,
             ),
           ),
         );

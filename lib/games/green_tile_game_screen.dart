@@ -92,62 +92,66 @@ class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
         backgroundColor: bgColor,
-        foregroundColor: Colors.white,
-        title: const Text('초록칸게임'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Text(
-              '남은 시간: $remainingTime초',
-              style: const TextStyle(color: Colors.white, fontSize: 24),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '점수: $score',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 34,
-                fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: bgColor,
+          foregroundColor: Colors.white,
+          title: const Text('초록칸게임'),
+          automaticallyImplyLeading: false,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Text(
+                '남은 시간: $remainingTime초',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              '초록칸을 빠르게 눌러!',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 20,
+              const SizedBox(height: 12),
+              Text(
+                '점수: $score',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 30),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 3,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: List.generate(9, (index) {
-                  final isGreen = index == greenIndex;
+              const SizedBox(height: 24),
+              const Text(
+                '초록칸을 빠르게 눌러!',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 20,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  children: List.generate(9, (index) {
+                    final isGreen = index == greenIndex;
 
-                  return GestureDetector(
-                    onTap: () => tapTile(index),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isGreen
-                            ? Colors.green
-                            : Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(18),
+                    return GestureDetector(
+                      onTap: () => tapTile(index),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isGreen
+                              ? Colors.green
+                              : Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -214,6 +218,8 @@ class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
               results: results,
               punishmentType: widget.punishmentType,
               punishment: finalPunishment,
+              roomcode: widget.roomcode,
+              myName: widget.myName,
             ),
           ),
         );

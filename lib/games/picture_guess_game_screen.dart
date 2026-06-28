@@ -243,71 +243,75 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
         backgroundColor: bgColor,
-        foregroundColor: Colors.white,
-        title: Text('그림맞추기 - ${widget.category}'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Text(
-              '남은 시간: $remainingTime초',
-              style: const TextStyle(color: Colors.white, fontSize: 24),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '점수: $score',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 34,
-                fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: bgColor,
+          foregroundColor: Colors.white,
+          title: Text('그림맞추기 - ${widget.category}'),
+          automaticallyImplyLeading: false,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Text(
+                '남은 시간: $remainingTime초',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '문제 제한시간: $questionRemainingTime초',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 50),
-            Text(
-              currentQuestion['emoji']!,
-              style: const TextStyle(fontSize: 100),
-            ),
-            const SizedBox(height: 40),
-            TextField(
-              controller: answerController,
-              focusNode: answerFocusNode,
-              style: const TextStyle(color: Colors.white, fontSize: 22),
-              decoration: InputDecoration(
-                hintText: '정답 입력',
-                hintStyle: const TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
+              const SizedBox(height: 12),
+              Text(
+                '점수: $score',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              onSubmitted: (_) => checkAnswer(),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: checkAnswer,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 56),
-                backgroundColor: Colors.white,
-                foregroundColor: bgColor,
+              const SizedBox(height: 12),
+              Text(
+                '문제 제한시간: $questionRemainingTime초',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 20,
+                ),
               ),
-              child: const Text('정답 제출', style: TextStyle(fontSize: 18)),
-            ),
-          ],
+              const SizedBox(height: 50),
+              Text(
+                currentQuestion['emoji']!,
+                style: const TextStyle(fontSize: 100),
+              ),
+              const SizedBox(height: 40),
+              TextField(
+                controller: answerController,
+                focusNode: answerFocusNode,
+                style: const TextStyle(color: Colors.white, fontSize: 22),
+                decoration: InputDecoration(
+                  hintText: '정답 입력',
+                  hintStyle: const TextStyle(color: Colors.white54),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onSubmitted: (_) => checkAnswer(),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: checkAnswer,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56),
+                  backgroundColor: Colors.white,
+                  foregroundColor: bgColor,
+                ),
+                child: const Text('정답 제출', style: TextStyle(fontSize: 18)),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -374,6 +378,8 @@ class _PictureGuessGameScreenState extends State<PictureGuessGameScreen> {
               results: results,
               punishmentType: widget.punishmentType,
               punishment: finalPunishment,
+              roomcode: widget.roomcode,
+              myName: widget.myName,
             ),
           ),
         );

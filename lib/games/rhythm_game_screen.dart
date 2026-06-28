@@ -110,112 +110,116 @@ class _RhythmGameScreenState extends State<RhythmGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
         backgroundColor: bgColor,
-        foregroundColor: Colors.white,
-        title: const Text('리듬게임'),
-      ),
-      body: GestureDetector(
-        onTap: tapBeat,
-        child: Stack(
-          children: [
-            Positioned(
-              top: 24,
-              left: 24,
-              child: Text(
-                '남은 시간: $remainingTime초',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 60,
-              left: 24,
-              child: Text(
-                '점수: $score',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const Positioned(
-              top: 130,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Text(
-                  '원이 선에 닿을 때 TAP!',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: hitLineY,
-              left: 40,
-              right: 40,
-              child: Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            if (noteActive)
+        appBar: AppBar(
+          backgroundColor: bgColor,
+          foregroundColor: Colors.white,
+          title: const Text('리듬게임'),
+          automaticallyImplyLeading: false,
+        ),
+        body: GestureDetector(
+          onTap: tapBeat,
+          child: Stack(
+            children: [
               Positioned(
-                top: noteY,
-                left: MediaQuery.of(context).size.width / 2 - 35,
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: const BoxDecoration(
-                    color: Colors.pinkAccent,
-                    shape: BoxShape.circle,
+                top: 24,
+                left: 24,
+                child: Text(
+                  '남은 시간: $remainingTime초',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
                   ),
-                  child: const Center(
-                    child: Text(
-                      '♪',
+                ),
+              ),
+              Positioned(
+                top: 60,
+                left: 24,
+                child: Text(
+                  '점수: $score',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const Positioned(
+                top: 130,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text(
+                    '원이 선에 닿을 때 TAP!',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: hitLineY,
+                left: 40,
+                right: 40,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              if (noteActive)
+                Positioned(
+                  top: noteY,
+                  left: MediaQuery.of(context).size.width / 2 - 35,
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    decoration: const BoxDecoration(
+                      color: Colors.pinkAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Text(
+                        '♪',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              Positioned(
+                bottom: 50,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ElevatedButton(
+                    onPressed: tapBeat,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(220, 70),
+                      backgroundColor: Colors.white,
+                      foregroundColor: bgColor,
+                    ),
+                    child: const Text(
+                      'TAP',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 34,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
               ),
-            Positioned(
-              bottom: 50,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ElevatedButton(
-                  onPressed: tapBeat,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(220, 70),
-                    backgroundColor: Colors.white,
-                    foregroundColor: bgColor,
-                  ),
-                  child: const Text(
-                    'TAP',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -282,6 +286,8 @@ class _RhythmGameScreenState extends State<RhythmGameScreen> {
               results: results,
               punishmentType: widget.punishmentType,
               punishment: finalPunishment,
+              roomcode: widget.roomcode,
+              myName: widget.myName,
             ),
           ),
         );

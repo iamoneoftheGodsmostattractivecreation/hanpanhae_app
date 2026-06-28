@@ -828,22 +828,24 @@ class TimeSelectScreen extends StatefulWidget {
 class _TimeSelectScreenState extends State<TimeSelectScreen> {
   int selectedTime = 30;
 
-  Widget timeButton(int seconds) {
-    final selected = selectedTime == seconds;
+  Widget timeButton(int seconds, int selectedTimeFromServer, bool isHost) {
+    final selected = selectedTimeFromServer == seconds;
 
     return ElevatedButton(
-      onPressed: () async {
-        setState(() {
-          selectedTime = seconds;
-        });
+      onPressed: isHost
+          ? () async {
+              setState(() {
+                selectedTime = seconds;
+              });
 
-        await FirebaseFirestore.instance
-            .collection('rooms')
-            .doc(widget.roomcode)
-            .update({
-          'gameTime': seconds,
-        });
-      },
+              await FirebaseFirestore.instance
+                  .collection('rooms')
+                  .doc(widget.roomcode)
+                  .update({
+                'gameTime': seconds,
+              });
+            }
+          : null,
       style: ElevatedButton.styleFrom(
         minimumSize: const Size(90, 50),
         backgroundColor: selected ? Colors.white : Colors.white24,
@@ -919,6 +921,8 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final selectedTimeFromServer = data['gameTime'] ?? selectedTime;
           final gameStarted = data['gameStarted'] ?? false;
+          final host = data['host'] ?? '';
+          final isHost = widget.myName == host;
 
           if (gameStarted == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -997,26 +1001,54 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        timeButton(15),
+                        timeButton(15, selectedTimeFromServer, isHost),
                         const SizedBox(width: 12),
-                        timeButton(30),
+                        timeButton(30, selectedTimeFromServer, isHost),
                         const SizedBox(width: 12),
-                        timeButton(60),
+                        timeButton(60, selectedTimeFromServer, isHost),
                       ],
                     ),
                     const SizedBox(height: 45),
-                    ElevatedButton(
-                      onPressed: startGame,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(220, 60),
-                        backgroundColor: Colors.white,
-                        foregroundColor: bgColor,
+                    if (isHost)
+                      ElevatedButton(
+                        onPressed: startGame,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(220, 60),
+                          backgroundColor: Colors.white,
+                          foregroundColor: bgColor,
+                        ),
+                        child: const Text(
+                          '게임 시작',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                      )
+                    else
+                      const Text(
+                        '방장이 시간을 선택하는 중...',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
                       ),
-                      child: const Text(
-                        '게임 시작',
-                        style: TextStyle(fontSize: 20),
+                    const SizedBox(height: 12),
+                    if (isHost)
+                      TextButton(
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('rooms')
+                              .doc(widget.roomcode)
+                              .update({
+                            'roomState': 'game_select',
+                            'gameStarted': false,
+                            'punishmentType': '',
+                            'finalPunishment': '',
+                          });
+                        },
+                        child: const Text(
+                          '게임/벌칙 다시 선택',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -1180,7 +1212,24 @@ class WaitingRoomScreen extends StatelessWidget {
                 ),
               );
             });
-          } // click 방장 button -> roomState = game_select -> detecting everyone's StreamBuilder -> everyone move to GameSelectScreen
+          }
+          // click 방장 button -> roomState = game_select -> detecting everyone's StreamBuilder -> everyone move to GameSelectScreen
+          if (roomState == 'time_select') {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TimeSelectScreen(
+                    players: players,
+                    punishmentType: data['punishmentType'] ?? '',
+                    selectedGame: data['selectedGame'] ?? '',
+                    roomcode: roomcode,
+                    myName: myName,
+                  ),
+                ),
+              );
+            });
+          }
 
           if (data['gameStarted'] == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {

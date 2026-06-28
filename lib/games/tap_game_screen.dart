@@ -86,6 +86,8 @@ class _TapGameScreenState extends State<TapGameScreen> {
               results: results,
               punishmentType: widget.punishmentType,
               punishment: finalPunishment,
+              roomcode: widget.roomcode,
+              myName: widget.myName,
             ),
           ),
         );
@@ -133,42 +135,46 @@ class _TapGameScreenState extends State<TapGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
         backgroundColor: bgColor,
-        foregroundColor: Colors.white,
-        title: const Text('연타게임'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '남은 시간: $remainingTime초',
-              style: const TextStyle(color: Colors.white, fontSize: 26),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              '점수: $score',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 42,
-                fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: bgColor,
+          foregroundColor: Colors.white,
+          title: const Text('연타게임'),
+          automaticallyImplyLeading: false,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '남은 시간: $remainingTime초',
+                style: const TextStyle(color: Colors.white, fontSize: 26),
               ),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: increaseScore,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(220, 220),
-                shape: const CircleBorder(),
-                backgroundColor: Colors.white,
-                foregroundColor: bgColor,
+              const SizedBox(height: 20),
+              Text(
+                '점수: $score',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              child: const Text('TAP!', style: TextStyle(fontSize: 32)),
-            ),
-          ],
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: increaseScore,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(220, 220),
+                  shape: const CircleBorder(),
+                  backgroundColor: Colors.white,
+                  foregroundColor: bgColor,
+                ),
+                child: const Text('TAP!', style: TextStyle(fontSize: 32)),
+              ),
+            ],
+          ),
         ),
       ),
     );
