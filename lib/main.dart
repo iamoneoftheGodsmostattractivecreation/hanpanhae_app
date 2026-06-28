@@ -875,12 +875,18 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
   }
 
   Future<void> startGame() async {
+    final roomRef =
+        FirebaseFirestore.instance.collection('rooms').doc(widget.roomcode);
+
+    final resultDocs = await roomRef.collection('results').get();
+
+    for (final doc in resultDocs.docs) {
+      await doc.reference.delete();
+    }
+
     final finalPunishment = makeFinalPunishment();
 
-    await FirebaseFirestore.instance
-        .collection('rooms')
-        .doc(widget.roomcode)
-        .update({
+    await roomRef.update({
       'gameTime': selectedTime,
       'gameStarted': true,
       'roomState': 'playing',
@@ -925,6 +931,8 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
                         gameTime: selectedTimeFromServer,
                         players: widget.players,
                         punishmentType: widget.punishmentType,
+                        roomcode: widget.roomcode,
+                        myName: widget.myName,
                       );
                     }
 
@@ -933,6 +941,8 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
                         gameTime: selectedTimeFromServer,
                         players: widget.players,
                         punishmentType: widget.punishmentType,
+                        roomcode: widget.roomcode,
+                        myName: widget.myName,
                       );
                     }
 
@@ -941,6 +951,8 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
                         gameTime: selectedTimeFromServer,
                         players: widget.players,
                         punishmentType: widget.punishmentType,
+                        roomcode: widget.roomcode,
+                        myName: widget.myName,
                       );
                     }
 
@@ -949,6 +961,8 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
                         gameTime: selectedTimeFromServer,
                         players: widget.players,
                         punishmentType: widget.punishmentType,
+                        roomcode: widget.roomcode,
+                        myName: widget.myName,
                       );
                     }
 
@@ -1038,6 +1052,8 @@ class WaitingRoomScreen extends StatelessWidget {
         gameTime: 30,
         players: players,
         punishmentType: '랜덤 벌칙',
+        roomcode: roomcode,
+        myName: myName,
       );
     }
 
@@ -1046,6 +1062,8 @@ class WaitingRoomScreen extends StatelessWidget {
         gameTime: 30,
         players: players,
         punishmentType: '랜덤 벌칙',
+        roomcode: roomcode,
+        myName: myName,
       );
     }
 
@@ -1054,6 +1072,8 @@ class WaitingRoomScreen extends StatelessWidget {
         gameTime: 30,
         players: players,
         punishmentType: '랜덤 벌칙',
+        roomcode: roomcode,
+        myName: myName,
       );
     }
 
@@ -1062,6 +1082,8 @@ class WaitingRoomScreen extends StatelessWidget {
         gameTime: 30,
         players: players,
         punishmentType: '랜덤 벌칙',
+        roomcode: roomcode,
+        myName: myName,
       );
     }
 

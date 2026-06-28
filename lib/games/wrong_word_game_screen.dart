@@ -5,26 +5,29 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../models/player_result.dart';
 import '../screens/result_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WrongWordGameScreen extends StatefulWidget {
   final int gameTime;
   final List<String> players;
   final String punishmentType;
+  final String roomcode;
+  final String myName;
 
   const WrongWordGameScreen({
     super.key,
     required this.gameTime,
     required this.players,
     required this.punishmentType,
+    required this.roomcode,
+    required this.myName,
   });
 
   @override
-  State<WrongWordGameScreen> createState() =>
-      _WrongWordGameScreenState();
+  State<WrongWordGameScreen> createState() => _WrongWordGameScreenState();
 }
 
-class _WrongWordGameScreenState
-    extends State<WrongWordGameScreen> {
+class _WrongWordGameScreenState extends State<WrongWordGameScreen> {
   int score = 0;
   late int remainingTime;
   Timer? timer;
@@ -51,8 +54,7 @@ class _WrongWordGameScreenState
   void makeNewQuestion() {
     final random = Random();
 
-    currentQuestion =
-        questions[random.nextInt(questions.length)];
+    currentQuestion = questions[random.nextInt(questions.length)];
 
     answerIndex = random.nextInt(9);
   }
@@ -84,48 +86,6 @@ class _WrongWordGameScreenState
     });
   }
 
-  String decidePunishment() {
-    final randomPunishments = [
-      '음료수 사기',
-      '편의점 다녀오기',
-      '노래 부르기',
-      '애교하기',
-    ];
-
-    return randomPunishments[
-        Random().nextInt(randomPunishments.length)];
-  }
-
-  void goToResultScreen() {
-    final random = Random();
-
-    final results = widget.players.map((name) {
-      if (name == '나') {
-        return PlayerResult(name, score);
-      }
-
-      return PlayerResult(
-        name,
-        random.nextInt(8) + 1,
-      );
-    }).toList();
-
-    results.sort(
-      (a, b) => b.score.compareTo(a.score),
-    );
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ResultScreen(
-          results: results,
-          punishmentType: widget.punishmentType,
-          punishment: decidePunishment(),
-        ),
-      ),
-    );
-  }
-
   @override
   void dispose() {
     timer?.cancel();
@@ -153,9 +113,7 @@ class _WrongWordGameScreenState
                 fontSize: 24,
               ),
             ),
-
             const SizedBox(height: 12),
-
             Text(
               '점수: $score',
               style: const TextStyle(
@@ -164,27 +122,23 @@ class _WrongWordGameScreenState
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 30),
-
             Expanded(
               child: GridView.count(
                 crossAxisCount: 3,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 children: List.generate(9, (index) {
-                  final word =
-                      index == answerIndex
-                          ? currentQuestion['wrong']!
-                          : currentQuestion['normal']!;
+                  final word = index == answerIndex
+                      ? currentQuestion['wrong']!
+                      : currentQuestion['normal']!;
 
                   return GestureDetector(
                     onTap: () => selectCell(index),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
-                        borderRadius:
-                            BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       child: Center(
                         child: Text(
@@ -206,5 +160,75 @@ class _WrongWordGameScreenState
       ),
     );
   }
-}
 
+  Future<void> saveResult(int score) async {
+    await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .collection('results')
+        .doc(widget.myName)
+        .set({
+      'name': widget.myName,
+      'score': score,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<List<PlayerResult>> loadResults() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .collection('results')
+        .get();
+
+    final results = snapshot.docs.map((doc) {
+      final data = doc.data();
+
+      return PlayerResult(
+        data['name'],
+        data['score'],
+      );
+    }).toList();
+
+    results.sort((a, b) => b.score.compareTo(a.score));
+
+    return results;
+  }
+
+  Future<String> loadFinalPunishment() async {
+    final roomDoc = await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .get();
+
+    final data = roomDoc.data() as Map<String, dynamic>;
+
+    return data['finalPunishment'] ?? '벌칙 없음';
+  }
+
+  Future<void> goToResultScreen() async {
+    await saveResult(score);
+
+    while (true) {
+      final results = await loadResults();
+
+      if (results.length >= widget.players.length) {
+        final finalPunishment = await loadFinalPunishment();
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ResultScreen(
+              results: results,
+              punishmentType: widget.punishmentType,
+              punishment: finalPunishment,
+            ),
+          ),
+        );
+        break;
+      }
+
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
+}

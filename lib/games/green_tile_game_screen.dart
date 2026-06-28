@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../constants/app_colors.dart';
 import '../models/player_result.dart';
 import '../screens/result_screen.dart';
@@ -10,19 +10,21 @@ class GreenTileGameScreen extends StatefulWidget {
   final int gameTime;
   final List<String> players;
   final String punishmentType;
+  final String roomcode;
+  final String myName;
 
   const GreenTileGameScreen({
     super.key,
     required this.gameTime,
     required this.players,
     required this.punishmentType,
+    required this.roomcode,
+    required this.myName,
   });
 
   @override
   State<GreenTileGameScreen> createState() => _GreenTileGameScreenState();
 }
-
-
 
 class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
   int score = 0;
@@ -77,53 +79,8 @@ class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
       if (index == greenIndex && canTap) {
         score++;
         makeNewGreenTile();
-      } 
-    });
-  }
-
-  String decidePunishment() {
-    final randomPunishments = [
-      '음료수 사기',
-      '편의점 다녀오기',
-      '노래 한 소절 부르기',
-      '애교하기',
-      '다음 판 방장하기',
-    ];
-
-    if (widget.punishmentType == '랜덤 벌칙') {
-      return randomPunishments[Random().nextInt(randomPunishments.length)];
-    }
-
-    if (widget.punishmentType == '팀장이 직접 선택') {
-      return '팀장이 고른 벌칙';
-    }
-
-    return '직접 입력한 벌칙';
-  }
-
-  void goToResultScreen() {
-    final random = Random();
-
-    final results = widget.players.map((name) {
-      if (name == '나') {
-        return PlayerResult(name, score);
       }
-
-      return PlayerResult(name, random.nextInt(25));
-    }).toList();
-
-    results.sort((a, b) => b.score.compareTo(a.score));
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ResultScreen(
-          results: results,
-          punishmentType: widget.punishmentType,
-          punishment: decidePunishment(),
-        ),
-      ),
-    );
+    });
   }
 
   @override
@@ -195,5 +152,75 @@ class _GreenTileGameScreenState extends State<GreenTileGameScreen> {
       ),
     );
   }
-}
 
+  Future<void> saveResult(int score) async {
+    await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .collection('results')
+        .doc(widget.myName)
+        .set({
+      'name': widget.myName,
+      'score': score,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<List<PlayerResult>> loadResults() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .collection('results')
+        .get();
+
+    final results = snapshot.docs.map((doc) {
+      final data = doc.data();
+
+      return PlayerResult(
+        data['name'],
+        data['score'],
+      );
+    }).toList();
+
+    results.sort((a, b) => b.score.compareTo(a.score));
+
+    return results;
+  }
+
+  Future<String> loadFinalPunishment() async {
+    final roomDoc = await FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomcode)
+        .get();
+
+    final data = roomDoc.data() as Map<String, dynamic>;
+
+    return data['finalPunishment'] ?? '벌칙 없음';
+  }
+
+  Future<void> goToResultScreen() async {
+    await saveResult(score);
+
+    while (true) {
+      final results = await loadResults();
+
+      if (results.length >= widget.players.length) {
+        final finalPunishment = await loadFinalPunishment();
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ResultScreen(
+              results: results,
+              punishmentType: widget.punishmentType,
+              punishment: finalPunishment,
+            ),
+          ),
+        );
+        break;
+      }
+
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
+}
