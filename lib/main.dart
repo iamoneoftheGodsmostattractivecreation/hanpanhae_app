@@ -923,6 +923,22 @@ class _TimeSelectScreenState extends State<TimeSelectScreen> {
           final gameStarted = data['gameStarted'] ?? false;
           final host = data['host'] ?? '';
           final isHost = widget.myName == host;
+          final roomState = data['roomState'] ?? 'time_select';
+
+          if (roomState == 'game_select') {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GameSelectScreen(
+                    players: widget.players,
+                    roomcode: widget.roomcode,
+                    myName: widget.myName,
+                  ),
+                ),
+              );
+            });
+          }
 
           if (gameStarted == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {

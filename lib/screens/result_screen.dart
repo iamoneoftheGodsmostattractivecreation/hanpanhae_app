@@ -48,12 +48,15 @@ class ResultScreen extends StatelessWidget {
           final isHost = myName == host;
           final roomState = data['roomState'] ?? '';
 
-          if (roomState == 'waiting') {
+          if (roomState == 'time_select') {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => WaitingRoomScreen(
+                  builder: (_) => TimeSelectScreen(
+                    players: results.map((result) => result.name).toList(),
+                    punishmentType: data['punishmentType'] ?? punishmentType,
+                    selectedGame: data['selectedGame'] ?? '',
                     roomcode: roomcode,
                     myName: myName,
                   ),
@@ -163,7 +166,6 @@ class ResultScreen extends StatelessWidget {
                           await roomRef.update({
                             'roomState': 'time_select',
                             'gameStarted': false,
-                            'punishmentType': '',
                             'finalPunishment': '',
                             'gameTime': 30,
                           });

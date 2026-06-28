@@ -1,5 +1,33 @@
 ## Current Status
 
+## Architecture
+
+Flutter
+        │
+Firebase Firestore
+        │
+Realtime Synchronization
+        │
+Room → Ready → Game → Result → Replay
+
+Home
+  │
+Room
+  │
+Ready
+  │
+Game Select
+  │
+Punishment
+  │
+Time Select
+  │
+Game
+  │
+Result
+  │
+Replay
+
 ### Implemented
 
 - Room Creation
